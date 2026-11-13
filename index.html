@@ -218,9 +218,10 @@
       border-radius: 7px;
       border: 1px solid var(--border);
       font-size: 0.8rem;
+      gap: 6px;
     }
     .cash { color: var(--hit); font-weight: 800; font-size: 0.96rem; }
-    .ammo-cost { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
+    .ammo-cost { color: var(--accent); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 
     .range-bar {
       display: grid;
@@ -336,8 +337,8 @@
     .modal-content {
       background: var(--panel);
       width: 100%;
-      max-width: 660px;
-      max-height: 90vh;
+      max-width: 680px;
+      max-height: 92vh;
       overflow-y: auto;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -374,13 +375,13 @@
 
     /* 3D Reloading Bench Modal Styling */
     .bench-modal-content {
-      max-width: 960px;
+      max-width: 1020px;
       display: grid;
-      grid-template-columns: 1fr 1.15fr;
+      grid-template-columns: 1.05fr 1.15fr;
       gap: 12px;
       align-items: start;
     }
-    @media (max-width: 780px) {
+    @media (max-width: 820px) {
       .bench-modal-content { grid-template-columns: 1fr; }
     }
     .bench-3d-box {
@@ -396,35 +397,52 @@
       width: 100%;
       height: 100%;
       display: block;
+      cursor: grab;
     }
     .bench-badge {
       position: absolute;
       top: 8px;
       left: 8px;
-      background: rgba(11, 14, 17, 0.85);
+      background: rgba(11, 14, 17, 0.88);
       border: 1px solid var(--border);
-      padding: 5px 8px;
+      padding: 6px 9px;
       border-radius: 5px;
       font-size: 0.71rem;
-      line-height: 1.35;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+    .bench-stage-badge {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      background: rgba(11, 14, 17, 0.9);
+      border: 1px solid var(--accent);
+      padding: 5px 9px;
+      border-radius: 5px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--accent);
+      pointer-events: none;
     }
     .bench-controls {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
     }
     .bench-card {
       background: var(--panel-alt);
       border: 1px solid var(--border);
       border-radius: 7px;
-      padding: 8px 10px;
+      padding: 7px 10px;
     }
     .bench-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
-      font-size: 0.76rem;
+      font-size: 0.75rem;
     }
     .bench-stats-grid {
       display: grid;
@@ -433,11 +451,11 @@
       background: #0b0e11;
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 8px 4px;
+      padding: 7px 4px;
       text-align: center;
     }
     .bench-stat-val {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 800;
       color: var(--accent);
       margin-top: 2px;
@@ -455,16 +473,43 @@
       height: 100%;
       width: 65%;
       background: var(--hit);
-      transition: width 0.15s, background 0.15s;
+      transition: width 0.12s, background 0.12s;
     }
+    .action-btns-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .btn-pour {
+      background: #2b6cb0;
+      border-color: #3182ce;
+      color: #ebf8ff;
+      font-weight: 800;
+      padding: 9px 6px;
+    }
+    .btn-pour:active { background: #2c5282; }
+    .btn-seat {
+      background: #b7791f;
+      border-color: #d69e2e;
+      color: #fff;
+      font-weight: 800;
+      padding: 9px 6px;
+    }
+    .btn-seat:active { background: #975a16; }
     .btn-load-equip {
       background: var(--hit);
       color: #fff;
       border: none;
       padding: 10px;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 800;
       width: 100%;
+    }
+    .btn-load-equip:disabled {
+      background: #374151;
+      color: #9ca3af;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -547,7 +592,7 @@
     <div class="control-deck">
       <div class="top-bar">
         <div>Bank: <span class="cash" id="ui-cash">$250.00</span></div>
-        <div id="ui-rifle-summary" style="font-weight:600; font-size:0.74rem;">.224 77gr SMK | 10x SFP</div>
+        <div id="ui-rifle-summary" style="font-weight:600; font-size:0.72rem;">5.56 NATO | .224 77gr SMK</div>
         <div class="ammo-cost" id="ui-ammo-cost">-$1.50/rd</div>
       </div>
 
@@ -618,7 +663,7 @@
         </div>
       </div>
 
-      <!-- Utility Tools (Now includes 3D Reloading Bench) -->
+      <!-- Utility Tools -->
       <div class="toolbar">
         <button class="btn-tool btn-ads-btn" onclick="toggleADS()">VIEW [V]</button>
         <button class="btn-tool btn-bench-btn" onclick="openBench()">BENCH</button>
@@ -635,38 +680,55 @@
   <!-- 3D RELOADING BENCH MODAL -->
   <div class="modal" id="modal-bench">
     <div class="modal-content bench-modal-content">
-      <!-- Left: 3D Cutaway Cartridge & Reloading Press Viewport -->
+      <!-- Left: 3D Reloading Bench, Powder Measure, Press & Barrel Rack -->
       <div>
         <div class="win-header">
-          <span>3D CARTRIDGE & PRESS BENCH</span>
-          <span style="font-size:0.7rem; color:var(--muted);">DRAG TO INSPECT</span>
+          <span>3D RELOADING BENCH & PRESS</span>
+          <span style="font-size:0.7rem; color:var(--muted);">DRAG TO ORBIT</span>
         </div>
         <div class="bench-3d-box">
           <canvas id="benchCanvas"></canvas>
           <div class="bench-badge">
+            <div>Cartridge: <b id="b3d-cart" style="color:#63b3ed;">5.56 NATO</b> (<span id="b3d-cap">30.5</span> gr H₂O)</div>
             <div>Projectile: <b id="b3d-bullet" style="color:var(--accent);">.224 77gr SMK</b></div>
-            <div>Powder Fill: <b id="b3d-fill" style="color:#68d391;">94.0%</b></div>
-            <div>Jump to Lands: <b id="b3d-jump" style="color:#63b3ed;">0.020"</b></div>
+            <div>Poured Charge: <b id="b3d-poured" style="color:#68d391;">24.0 / 24.0 gr</b></div>
+            <div>Seating Jump: <b id="b3d-jump" style="color:#cbd5e1;">0.020"</b></div>
+          </div>
+          <div class="bench-stage-badge" id="b3d-stage-msg">
+            STAGE 1: FUNNEL POWDER INTO CASE, THEN SEAT BULLET WITH PRESS
           </div>
         </div>
-        <div class="bench-card" style="margin-top:8px;">
+
+        <!-- Interactive Bench Actions: Powder Funneling & Press Handle Seating -->
+        <div class="action-btns-grid">
+          <button class="btn-pour" id="btn-pour-powder"
+            onmousedown="startPouringPowder()" onmouseup="stopPouringPowder()" onmouseleave="stopPouringPowder()"
+            ontouchstart="startPouringPowder(); event.preventDefault();" ontouchend="stopPouringPowder()">
+            HOLD TO FUNNEL POWDER
+          </button>
+          <button class="btn-seat" id="btn-seat-press" onclick="triggerPressSeat()">
+            PULL PRESS HANDLE (SEAT)
+          </button>
+        </div>
+
+        <div class="bench-card" style="margin-top:7px;">
           <div class="bench-row">
-            <span>Chamber Pressure (SAAMI Max 62,000 PSI)</span>
+            <span>Chamber Pressure (SAAMI Max <b id="bench-saami-lbl">62,000</b> PSI)</span>
             <b id="bench-psi-lbl" style="color:var(--hit);">54,200 PSI</b>
           </div>
           <div class="pressure-bar-bg">
             <div class="pressure-bar-fill" id="bench-psi-bar"></div>
           </div>
-          <div id="bench-node-note" style="font-size:0.7rem; color:var(--muted); margin-top:5px;">
-            Tune charge weight to locate an OCW velocity node (low SD).
+          <div id="bench-node-note" style="font-size:0.7rem; color:var(--muted); margin-top:4px;">
+            Pour target powder charge with funnel, then cycle press to seat bullet.
           </div>
         </div>
       </div>
 
-      <!-- Right: Load Development Controls -->
+      <!-- Right: Cartridge, Component & Die Controls -->
       <div class="bench-controls">
         <div class="win-header">
-          <span>HANDLOAD RECIPE TUNER</span>
+          <span>CARTRIDGE & LOAD RECIPE</span>
           <button class="win-close" onclick="closeBench()">CLOSE</button>
         </div>
 
@@ -690,11 +752,19 @@
           </div>
         </div>
 
+        <!-- Cartridge Case Selection (Filtered by Equipped Bullet Caliber) -->
+        <div class="bench-card">
+          <div class="bench-row">
+            <label style="font-weight:700;">Chamber / Cartridge Case</label>
+            <select id="b-sel-cartridge" onchange="selectBenchCartridge(this.value)" style="width:62%;"></select>
+          </div>
+        </div>
+
         <!-- Brass & Primer Prep -->
         <div class="bench-card">
           <div class="bench-row">
             <label style="font-weight:700;">Brass & Primer Prep</label>
-            <select id="b-sel-brass" onchange="updateBenchCalculations()" style="width:62%;">
+            <select id="b-sel-brass" onchange="updateBenchRecipeParams()" style="width:62%;">
               <option value="range">Mixed Range Brass + Bulk Primers ($0.15/rd)</option>
               <option value="sorted" selected>Weight-Sorted Brass + Match Primers ($0.35/rd)</option>
               <option value="lapua">Annealed Match Brass + Neck-Turned ($0.65/rd)</option>
@@ -702,30 +772,31 @@
           </div>
         </div>
 
-        <!-- Powder Type & Charge Weight -->
+        <!-- Powder Type & Target Charge Weight -->
         <div class="bench-card">
-          <div class="bench-row" style="margin-bottom:6px;">
+          <div class="bench-row" style="margin-bottom:5px;">
             <label style="font-weight:700;">Propellant Type</label>
-            <select id="b-sel-powder" onchange="updateBenchCalculations()" style="width:62%;">
+            <select id="b-sel-powder" onchange="updateBenchRecipeParams()" style="width:62%;">
               <option value="extruded" selected>Temp-Stable Extruded Stick Powder</option>
               <option value="ball">High-Energy Spherical Ball Powder (+65 fps)</option>
             </select>
           </div>
           <div class="bench-row">
-            <span>Charge Weight (<b id="b-charge-pct" style="color:var(--accent);">100.0%</b>)</span>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchCharge(-0.2)">-0.2</button>
-              <span class="readout" id="b-disp-charge">24.0 gr</span>
-              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchCharge(+0.2)">+0.2</button>
+            <span>Target Charge (<b id="b-charge-pct" style="color:var(--accent);">100.0%</b>)</span>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <button class="btn-mini" style="padding:3px 7px;" onclick="stepTargetCharge(-0.2)">-0.2</button>
+              <span class="readout" id="b-disp-target-gr">24.0 gr</span>
+              <button class="btn-mini" style="padding:3px 7px;" onclick="stepTargetCharge(+0.2)">+0.2</button>
+              <button class="btn-mini" style="padding:3px 7px; font-size:0.7rem;" onclick="resetBenchRound()">DUMP</button>
             </div>
           </div>
-          <input type="range" id="b-slider-charge" min="92" max="106" step="0.2" value="100" oninput="setBenchChargePct(this.value)">
+          <input type="range" id="b-slider-charge" min="92" max="106" step="0.2" value="100" oninput="setTargetChargePct(this.value)">
         </div>
 
         <!-- Seating Depth / Bullet Jump -->
         <div class="bench-card">
           <div class="bench-row">
-            <span>Seating Depth (Jump off Lands)</span>
+            <span>Die Seating Depth (Jump off Lands)</span>
             <div style="display:flex; align-items:center; gap:6px;">
               <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchJump(-0.005)">-.005"</button>
               <span class="readout" id="b-disp-jump">0.020"</span>
@@ -735,20 +806,20 @@
           <input type="range" id="b-slider-jump" min="0.005" max="0.080" step="0.005" value="0.020" oninput="setBenchJump(this.value)">
         </div>
 
-        <!-- Bullet Meplat Trimming / Pointing Die -->
+        <!-- Meplat Trimming & Pointing Die (Closes/uniforms copper jacket meplat — no polymer tip added) -->
         <div class="bench-card">
           <div class="bench-row">
             <div>
-              <div style="font-weight:700;">Meplat Trimming & Bullet Pointing</div>
-              <div style="font-size:0.68rem; color:var(--muted);">Uniforms bullet tips (+2.2% G7 BC & tighter BC SD)</div>
+              <div style="font-weight:700;">Meplat Trimming & Jacket Pointing Die</div>
+              <div style="font-size:0.68rem; color:var(--muted);">Uniforms copper tip meplat (+2.2% G7 BC & tighter BC SD)</div>
             </div>
-            <input type="checkbox" id="b-chk-point" onchange="updateBenchCalculations()" style="width:18px; height:18px; accent-color:var(--accent);">
+            <input type="checkbox" id="b-chk-point" onchange="updateBenchRecipeParams()" style="width:18px; height:18px; accent-color:var(--accent);">
           </div>
         </div>
 
         <!-- Equip Handload vs Factory Ammo -->
         <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:8px;">
-          <button class="btn-load-equip" onclick="equipCustomHandload()">EQUIP CUSTOM HANDLOAD</button>
+          <button class="btn-load-equip" id="btn-equip-handload" onclick="equipCustomHandload()">EQUIP CUSTOM HANDLOAD</button>
           <button onclick="useFactoryAmmo()" style="font-weight:700;">USE FACTORY AMMO</button>
         </div>
       </div>
@@ -822,40 +893,124 @@
     }
 
     // =========================================================================
-    // 2. COMPLETE 25-BULLET LIBRARY & EQUIPMENT CATALOG
+    // 2. CARTRIDGE SPECIFICATIONS (CASE CAPACITIES IN GRAINS H2O & 3D DIMENSIONS)
     // =========================================================================
+    const CARTRIDGES = {
+      '556_nato': {
+        id: '556_nato', name: '5.56x45mm NATO', cal: 0.224, capH2O: 30.5, saamiPsi: 62000,
+        baseDiaIn: 0.378, caseLenIn: 1.760, shoulderFrac: 0.78, neckFrac: 0.12, belted: false,
+        mvMult: 1.00, baseChargeGr: 24.0
+      },
+      '22_arc': {
+        id: '22_arc', name: '22 ARC', cal: 0.224, capH2O: 34.5, saamiPsi: 52000,
+        baseDiaIn: 0.441, caseLenIn: 1.525, shoulderFrac: 0.72, neckFrac: 0.16, belted: false,
+        mvMult: 1.045, baseChargeGr: 27.5
+      },
+      '6_arc': {
+        id: '6_arc', name: '6mm ARC', cal: 0.243, capH2O: 34.0, saamiPsi: 52000,
+        baseDiaIn: 0.441, caseLenIn: 1.490, shoulderFrac: 0.72, neckFrac: 0.16, belted: false,
+        mvMult: 0.92, baseChargeGr: 27.2
+      },
+      '6_gt': {
+        id: '6_gt', name: '6mm GT', cal: 0.243, capH2O: 44.5, saamiPsi: 62000,
+        baseDiaIn: 0.473, caseLenIn: 1.720, shoulderFrac: 0.74, neckFrac: 0.15, belted: false,
+        mvMult: 0.975, baseChargeGr: 35.5
+      },
+      '6_cm': {
+        id: '6_cm', name: '6mm Creedmoor', cal: 0.243, capH2O: 51.5, saamiPsi: 62000,
+        baseDiaIn: 0.470, caseLenIn: 1.920, shoulderFrac: 0.77, neckFrac: 0.13, belted: false,
+        mvMult: 1.00, baseChargeGr: 41.2
+      },
+      '25_cm': {
+        id: '25_cm', name: '25 Creedmoor', cal: 0.257, capH2O: 52.0, saamiPsi: 62000,
+        baseDiaIn: 0.470, caseLenIn: 1.920, shoulderFrac: 0.77, neckFrac: 0.13, belted: false,
+        mvMult: 1.00, baseChargeGr: 41.8
+      },
+      '65_cm': {
+        id: '65_cm', name: '6.5 Creedmoor', cal: 0.264, capH2O: 52.5, saamiPsi: 62000,
+        baseDiaIn: 0.470, caseLenIn: 1.920, shoulderFrac: 0.77, neckFrac: 0.13, belted: false,
+        mvMult: 1.00, baseChargeGr: 41.5
+      },
+      '65_prc': {
+        id: '65_prc', name: '6.5 PRC', cal: 0.264, capH2O: 67.5, saamiPsi: 65000,
+        baseDiaIn: 0.532, caseLenIn: 2.030, shoulderFrac: 0.76, neckFrac: 0.13, belted: false,
+        mvMult: 1.085, baseChargeGr: 54.0
+      },
+      '7mm_rem_mag': {
+        id: '7mm_rem_mag', name: '7mm Remington Magnum', cal: 0.284, capH2O: 83.2, saamiPsi: 61000,
+        baseDiaIn: 0.513, caseLenIn: 2.500, shoulderFrac: 0.82, neckFrac: 0.10, belted: true,
+        mvMult: 0.985, baseChargeGr: 65.5
+      },
+      '7mm_prc': {
+        id: '7mm_prc', name: '7mm PRC', cal: 0.284, capH2O: 85.5, saamiPsi: 65000,
+        baseDiaIn: 0.532, caseLenIn: 2.280, shoulderFrac: 0.78, neckFrac: 0.12, belted: false,
+        mvMult: 1.00, baseChargeGr: 67.5
+      },
+      '308_win': {
+        id: '308_win', name: '.308 Winchester', cal: 0.308, capH2O: 54.0, saamiPsi: 62000,
+        baseDiaIn: 0.473, caseLenIn: 2.015, shoulderFrac: 0.78, neckFrac: 0.13, belted: false,
+        mvMult: 1.00, baseChargeGr: 43.5
+      },
+      '300_prc': {
+        id: '300_prc', name: '.300 PRC', cal: 0.308, capH2O: 95.5, saamiPsi: 65000,
+        baseDiaIn: 0.532, caseLenIn: 2.580, shoulderFrac: 0.80, neckFrac: 0.11, belted: false,
+        mvMult: 1.00, baseChargeGr: 76.5
+      },
+      '300_norma': {
+        id: '300_norma', name: '.300 Norma Magnum', cal: 0.308, capH2O: 103.5, saamiPsi: 64000,
+        baseDiaIn: 0.585, caseLenIn: 2.490, shoulderFrac: 0.77, neckFrac: 0.12, belted: false,
+        mvMult: 1.032, baseChargeGr: 83.0
+      },
+      '375_cheytac': {
+        id: '375_cheytac', name: '.375 CheyTac', cal: 0.375, capH2O: 165.0, saamiPsi: 63500,
+        baseDiaIn: 0.640, caseLenIn: 3.020, shoulderFrac: 0.78, neckFrac: 0.12, belted: false,
+        mvMult: 1.00, baseChargeGr: 132.0
+      }
+    };
+
+    // =========================================================================
+    // 3. COMPLETE 25-BULLET LIBRARY WITH EXACT CARTRIDGE COMPATIBILITY & TIP TYPES
+    // =========================================================================
+    // tipType: 'otm' (copper open-tip), 'eldm' (red polymer tip), 'atip' (machined aluminum tip)
     const BULLETS = [
-      { id: 'sierra_224_77', name: '.224 Sierra 77gr SMK', cost: 0, roundCost: 1.50, bc: 0.190, mv: 2750, dia: 0.224, wt: 77.0, len: 0.990, twist: 8.0, baseGr: 24.0, sweetJump: 0.020 },
-      { id: 'hornady_224_75', name: '.224 Hornady 75gr ELD-M', cost: 120, roundCost: 1.60, bc: 0.212, mv: 2810, dia: 0.224, wt: 75.0, len: 1.110, twist: 8.0, baseGr: 24.2, sweetJump: 0.025 },
-      { id: 'berger_224_805', name: '.224 Berger 80.5gr Fullbore', cost: 220, roundCost: 1.85, bc: 0.226, mv: 2780, dia: 0.224, wt: 80.5, len: 1.095, twist: 7.5, baseGr: 24.5, sweetJump: 0.015 },
-      { id: 'hornady_224_88', name: '.224 Hornady 88gr ELD-M', cost: 320, roundCost: 1.95, bc: 0.274, mv: 2680, dia: 0.224, wt: 88.0, len: 1.240, twist: 7.0, baseGr: 24.8, sweetJump: 0.030 },
+      // .224 Bullets (77, 75, 80.5 -> 5.56 NATO; 88gr -> 22 ARC)
+      { id: 'sierra_224_77', name: '.224 Sierra 77gr SMK', cost: 0, roundCost: 1.50, bc: 0.190, mv: 2750, dia: 0.224, wt: 77.0, len: 0.990, twist: 8.0, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.020 },
+      { id: 'hornady_224_75', name: '.224 Hornady 75gr ELD-M', cost: 120, roundCost: 1.60, bc: 0.212, mv: 2810, dia: 0.224, wt: 75.0, len: 1.110, twist: 8.0, tipType: 'eldm', cases: ['556_nato'], sweetJump: 0.025 },
+      { id: 'berger_224_805', name: '.224 Berger 80.5gr Fullbore', cost: 220, roundCost: 1.85, bc: 0.226, mv: 2780, dia: 0.224, wt: 80.5, len: 1.095, twist: 7.5, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.015 },
+      { id: 'hornady_224_88', name: '.224 Hornady 88gr ELD-M', cost: 320, roundCost: 1.95, bc: 0.274, mv: 2680, dia: 0.224, wt: 88.0, len: 1.240, twist: 7.0, tipType: 'eldm', cases: ['22_arc'], sweetJump: 0.030 },
 
-      { id: 'hornady_243_105', name: '.243 Hornady 105gr BTHP', cost: 420, roundCost: 2.10, bc: 0.265, mv: 2980, dia: 0.243, wt: 105.0, len: 1.230, twist: 8.0, baseGr: 41.5, sweetJump: 0.025 },
-      { id: 'sierra_243_107', name: '.243 Sierra 107gr SMK', cost: 500, roundCost: 2.25, bc: 0.262, mv: 2960, dia: 0.243, wt: 107.0, len: 1.230, twist: 8.0, baseGr: 41.2, sweetJump: 0.020 },
-      { id: 'hornady_243_108', name: '.243 Hornady 108gr ELD-M', cost: 600, roundCost: 2.30, bc: 0.275, mv: 2950, dia: 0.243, wt: 108.0, len: 1.265, twist: 7.5, baseGr: 41.0, sweetJump: 0.030 },
-      { id: 'hornady_243_109', name: '.243 Hornady 109gr ELD-M', cost: 720, roundCost: 2.45, bc: 0.295, mv: 2930, dia: 0.243, wt: 109.0, len: 1.315, twist: 7.5, baseGr: 40.8, sweetJump: 0.025 },
-      { id: 'berger_243_120', name: '.243 Berger 120gr LR Hybrid', cost: 880, roundCost: 2.75, bc: 0.328, mv: 2860, dia: 0.243, wt: 120.0, len: 1.383, twist: 7.0, baseGr: 40.2, sweetJump: 0.020 },
+      // .243 Bullets (105, 107, 108, 109 -> 6 CM, 6 ARC, 6 GT; 120gr -> 6 CM, 6 GT ONLY)
+      { id: 'hornady_243_105', name: '.243 Hornady 105gr BTHP', cost: 420, roundCost: 2.10, bc: 0.265, mv: 2980, dia: 0.243, wt: 105.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
+      { id: 'sierra_243_107', name: '.243 Sierra 107gr SMK', cost: 500, roundCost: 2.25, bc: 0.262, mv: 2960, dia: 0.243, wt: 107.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.020 },
+      { id: 'hornady_243_108', name: '.243 Hornady 108gr ELD-M', cost: 600, roundCost: 2.30, bc: 0.275, mv: 2950, dia: 0.243, wt: 108.0, len: 1.265, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.030 },
+      { id: 'hornady_243_109', name: '.243 Hornady 109gr ELD-M', cost: 720, roundCost: 2.45, bc: 0.295, mv: 2930, dia: 0.243, wt: 109.0, len: 1.315, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
+      { id: 'berger_243_120', name: '.243 Berger 120gr LR Hybrid', cost: 880, roundCost: 2.75, bc: 0.328, mv: 2860, dia: 0.243, wt: 120.0, len: 1.383, twist: 7.0, tipType: 'otm', cases: ['6_cm', '6_gt'], sweetJump: 0.020 },
 
-      { id: 'hornady_257_134', name: '.257 Hornady 134gr ELD-M', cost: 1020, roundCost: 2.90, bc: 0.325, mv: 2880, dia: 0.257, wt: 134.0, len: 1.410, twist: 7.5, baseGr: 42.5, sweetJump: 0.030 },
-      { id: 'berger_257_135', name: '.257 Berger 135gr LR Hybrid', cost: 1180, roundCost: 3.10, bc: 0.334, mv: 2870, dia: 0.257, wt: 135.0, len: 1.416, twist: 7.5, baseGr: 42.2, sweetJump: 0.020 },
+      // .257 Bullets -> 25 Creedmoor
+      { id: 'hornady_257_134', name: '.257 Hornady 134gr ELD-M', cost: 1020, roundCost: 2.90, bc: 0.325, mv: 2880, dia: 0.257, wt: 134.0, len: 1.410, twist: 7.5, tipType: 'eldm', cases: ['25_cm'], sweetJump: 0.030 },
+      { id: 'berger_257_135', name: '.257 Berger 135gr LR Hybrid', cost: 1180, roundCost: 3.10, bc: 0.334, mv: 2870, dia: 0.257, wt: 135.0, len: 1.416, twist: 7.5, tipType: 'otm', cases: ['25_cm'], sweetJump: 0.020 },
 
-      { id: 'hornady_264_140', name: '.264 Hornady 140gr ELD-M', cost: 1320, roundCost: 3.00, bc: 0.315, mv: 2715, dia: 0.264, wt: 140.0, len: 1.380, twist: 8.0, baseGr: 41.8, sweetJump: 0.030 },
-      { id: 'berger_264_140', name: '.264 Berger 140gr Hybrid', cost: 1450, roundCost: 3.25, bc: 0.311, mv: 2720, dia: 0.264, wt: 140.0, len: 1.405, twist: 8.0, baseGr: 42.0, sweetJump: 0.025 },
-      { id: 'berger_264_144', name: '.264 Berger 144gr LR Hybrid', cost: 1600, roundCost: 3.40, bc: 0.336, mv: 2705, dia: 0.264, wt: 144.0, len: 1.415, twist: 8.0, baseGr: 41.6, sweetJump: 0.020 },
-      { id: 'barnes_264_145', name: '.264 Barnes 145gr Match Burner', cost: 1700, roundCost: 3.30, bc: 0.341, mv: 2695, dia: 0.264, wt: 145.0, len: 1.466, twist: 7.5, baseGr: 41.5, sweetJump: 0.035 },
-      { id: 'hornady_264_147', name: '.264 Hornady 147gr ELD-M', cost: 1850, roundCost: 3.35, bc: 0.335, mv: 2690, dia: 0.264, wt: 147.0, len: 1.440, twist: 7.5, baseGr: 41.2, sweetJump: 0.030 },
-      { id: 'sierra_264_150', name: '.264 Sierra 150gr SMK', cost: 2000, roundCost: 3.60, bc: 0.356, mv: 2675, dia: 0.264, wt: 150.0, len: 1.510, twist: 7.5, baseGr: 41.0, sweetJump: 0.015 },
-      { id: 'hornady_264_153', name: '.264 Hornady 153gr A-Tip', cost: 2250, roundCost: 4.20, bc: 0.354, mv: 2660, dia: 0.264, wt: 153.0, len: 1.505, twist: 7.5, baseGr: 40.8, sweetJump: 0.025 },
-      { id: 'berger_264_1535', name: '.264 Berger 153.5gr LR Hybrid', cost: 2450, roundCost: 3.90, bc: 0.356, mv: 2665, dia: 0.264, wt: 153.5, len: 1.465, twist: 7.5, baseGr: 40.8, sweetJump: 0.020 },
+      // .264 Bullets -> 6.5 Creedmoor & 6.5 PRC
+      { id: 'hornady_264_140', name: '.264 Hornady 140gr ELD-M', cost: 1320, roundCost: 3.00, bc: 0.315, mv: 2715, dia: 0.264, wt: 140.0, len: 1.380, twist: 8.0, tipType: 'eldm', cases: ['65_cm', '65_prc'], sweetJump: 0.030 },
+      { id: 'berger_264_140', name: '.264 Berger 140gr Hybrid', cost: 1450, roundCost: 3.25, bc: 0.311, mv: 2720, dia: 0.264, wt: 140.0, len: 1.405, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
+      { id: 'berger_264_144', name: '.264 Berger 144gr LR Hybrid', cost: 1600, roundCost: 3.40, bc: 0.336, mv: 2705, dia: 0.264, wt: 144.0, len: 1.415, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
+      { id: 'barnes_264_145', name: '.264 Barnes 145gr Match Burner', cost: 1700, roundCost: 3.30, bc: 0.341, mv: 2695, dia: 0.264, wt: 145.0, len: 1.466, twist: 7.5, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.035 },
+      { id: 'hornady_264_147', name: '.264 Hornady 147gr ELD-M', cost: 1850, roundCost: 3.35, bc: 0.335, mv: 2690, dia: 0.264, wt: 147.0, len: 1.440, twist: 7.5, tipType: 'eldm', cases: ['65_cm', '65_prc'], sweetJump: 0.030 },
+      { id: 'sierra_264_150', name: '.264 Sierra 150gr SMK', cost: 2000, roundCost: 3.60, bc: 0.356, mv: 2675, dia: 0.264, wt: 150.0, len: 1.510, twist: 7.5, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.015 },
+      { id: 'hornady_264_153', name: '.264 Hornady 153gr A-Tip', cost: 2250, roundCost: 4.20, bc: 0.354, mv: 2660, dia: 0.264, wt: 153.0, len: 1.505, twist: 7.5, tipType: 'atip', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
+      { id: 'berger_264_1535', name: '.264 Berger 153.5gr LR Hybrid', cost: 2450, roundCost: 3.90, bc: 0.356, mv: 2665, dia: 0.264, wt: 153.5, len: 1.465, twist: 7.5, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
 
-      { id: 'sierra_284_197', name: '7mm Sierra 197gr SMK', cost: 2750, roundCost: 4.10, bc: 0.385, mv: 2790, dia: 0.284, wt: 197.0, len: 1.650, twist: 8.0, baseGr: 66.0, sweetJump: 0.015 },
-      { id: 'berger_284_195', name: '7mm Berger 195gr EOL Hybrid', cost: 2950, roundCost: 4.30, bc: 0.387, mv: 2815, dia: 0.284, wt: 195.0, len: 1.655, twist: 8.0, baseGr: 66.5, sweetJump: 0.020 },
+      // .284 (7mm) Bullets -> 7mm PRC & 7mm Remington Magnum
+      { id: 'sierra_284_197', name: '7mm Sierra 197gr SMK', cost: 2750, roundCost: 4.10, bc: 0.385, mv: 2790, dia: 0.284, wt: 197.0, len: 1.650, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.015 },
+      { id: 'berger_284_195', name: '7mm Berger 195gr EOL Hybrid', cost: 2950, roundCost: 4.30, bc: 0.387, mv: 2815, dia: 0.284, wt: 195.0, len: 1.655, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.020 },
 
-      { id: 'berger_308_185', name: '.308 Berger 185gr Juggernaut', cost: 1100, roundCost: 2.85, bc: 0.283, mv: 2620, dia: 0.308, wt: 185.0, len: 1.355, twist: 10.0, baseGr: 44.0, sweetJump: 0.025 },
-      { id: 'berger_308_200', name: '.308 Berger 200.20x Hybrid', cost: 1550, roundCost: 3.30, bc: 0.328, mv: 2590, dia: 0.308, wt: 200.0, len: 1.510, twist: 10.0, baseGr: 43.2, sweetJump: 0.020 },
-      { id: 'berger_308_245', name: '.308 Berger 245gr LR Hybrid', cost: 3300, roundCost: 4.80, bc: 0.433, mv: 2710, dia: 0.308, wt: 245.0, len: 1.775, twist: 8.5, baseGr: 77.0, sweetJump: 0.020 },
+      // .308 Bullets (185, 200.20x -> .308 Win; 245gr Berger -> .300 PRC & .300 Norma Mag)
+      { id: 'berger_308_185', name: '.308 Berger 185gr Juggernaut', cost: 1100, roundCost: 2.85, bc: 0.283, mv: 2620, dia: 0.308, wt: 185.0, len: 1.355, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.025 },
+      { id: 'berger_308_200', name: '.308 Berger 200.20x Hybrid', cost: 1550, roundCost: 3.30, bc: 0.328, mv: 2590, dia: 0.308, wt: 200.0, len: 1.510, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.020 },
+      { id: 'berger_308_245', name: '.308 Berger 245gr LR Hybrid', cost: 3300, roundCost: 4.80, bc: 0.433, mv: 2710, dia: 0.308, wt: 245.0, len: 1.775, twist: 8.5, tipType: 'otm', cases: ['300_prc', '300_norma'], sweetJump: 0.020 },
 
-      { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, baseGr: 132.0, sweetJump: 0.030 }
+      // .375 Bullet -> .375 CheyTac
+      { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, tipType: 'otm', cases: ['375_cheytac'], sweetJump: 0.030 }
     ];
 
     const OPTICS = [
@@ -889,9 +1044,9 @@
     ];
 
     // =========================================================================
-    // 3. PLAYER STATE, CUSTOM HANDLOAD RECIPE & CHRONOGRAPH HISTORY
+    // 4. PLAYER STATE, HANDLOAD RECIPE & INTERACTIVE BENCH STATE
     // =========================================================================
-    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v1';
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v2';
     const DEFAULT_SAVE = {
       cash: 250.00,
       unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
@@ -905,9 +1060,12 @@
       },
       handload: {
         active: false,
+        cartridgeId: '556_nato',
         brass: 'sorted',
         powder: 'extruded',
-        chargePct: 100.0,
+        targetChargePct: 100.0,
+        pouredChargePct: 100.0,
+        isSeated: true,
         jumpIn: 0.020,
         pointed: false
       }
@@ -957,8 +1115,17 @@
 
       chronoLog: [],
       benchOpen: false,
+      pouringPowder: false,
+      pressAnimTimer: -1,
       inFlight: false
     };
+
+    function ensureValidCartridgeForBullet() {
+      const b = BULLETS.find(x => x.id === state.eq.bullet) || BULLETS[0];
+      if (!b.cases.includes(state.handload.cartridgeId)) {
+        state.handload.cartridgeId = b.cases[0];
+      }
+    }
 
     function saveProgress() {
       try {
@@ -983,6 +1150,7 @@
           if (state.eq.wind === 'wind_2') state.eq.wind = 'wind_1';
         }
         if (parsed.handload) state.handload = { ...DEFAULT_SAVE.handload, ...parsed.handload };
+        ensureValidCartridgeForBullet();
         const o = OPTICS.find(x => x.id === state.eq.optic) || OPTICS[0];
         state.zoom = Math.min(o.maxZoom, Math.max(o.minZoom, state.zoom));
         document.getElementById('hud-zoom').innerText = `${state.zoom.toFixed(1)}x`;
@@ -1009,16 +1177,19 @@
       setFeedback("PROGRESS RESET TO STARTER KIT", "#e5a93b");
     }
 
-    // Compute Effective Ballistic Parameters for Active Ammo (Factory vs. Custom Handload)
-    function computeActiveAmmoSpecs() {
+    // Compute Effective Ballistic Parameters for Active Ammo
+    function computeActiveAmmoSpecs(overrideChargePct = null) {
+      ensureValidCartridgeForBullet();
       const b = BULLETS.find(x => x.id === state.eq.bullet);
       const a = BRASS_POWDER.find(x => x.id === state.eq.ammo);
+      const cart = CARTRIDGES[state.handload.cartridgeId] || CARTRIDGES[b.cases[0]];
 
       if (!state.handload.active) {
         return {
           isHandload: false,
-          label: `${b.name}`,
-          mv: b.mv + a.mvBonus,
+          cartridge: cart,
+          label: `${cart.name} | ${b.name}`,
+          mv: Math.round(b.mv * cart.mvMult + a.mvBonus),
           mvSD: a.mvSD,
           bc: b.bc,
           bcSDPct: a.bcSDPct,
@@ -1028,47 +1199,44 @@
       }
 
       const hl = state.handload;
-      const chargeDeltaPct = (hl.chargePct - 100.0); // e.g., -8 to +6
+      const activePct = overrideChargePct !== null ? overrideChargePct : hl.pouredChargePct;
+      const chargeDeltaPct = (activePct - 100.0);
       const powderBonusFps = hl.powder === 'ball' ? 65 : 0;
       const tempShiftFps = hl.powder === 'ball' ? (state.tempF - 64) * 1.1 : (state.tempF - 64) * 0.15;
-      const mv = Math.round(b.mv + powderBonusFps + (chargeDeltaPct * 26) + tempShiftFps);
+      const mv = Math.max(800, Math.round(b.mv * cart.mvMult + powderBonusFps + (chargeDeltaPct * 26) + tempShiftFps));
 
-      // Chamber Pressure PSI
-      const basePsi = 54000 + (hl.powder === 'ball' ? 2200 : 0);
-      const psi = Math.round(basePsi + chargeDeltaPct * 1450 + Math.max(0, (0.015 - hl.jumpIn) * 140000));
+      // Chamber Pressure PSI scaled to cartridge SAAMI ceiling
+      const basePsi = (cart.saamiPsi * 0.87) + (hl.powder === 'ball' ? 2200 : 0);
+      const psi = Math.round(basePsi + chargeDeltaPct * (cart.saamiPsi * 0.024) + Math.max(0, (0.015 - hl.jumpIn) * 140000));
 
-      // Brass/Primer Base SD
       let baseSD = hl.brass === 'lapua' ? 4.8 : (hl.brass === 'sorted' ? 8.2 : 16.5);
-      // OCW Velocity Nodes at 97.4% and 102.2% charge weight
-      const distNode1 = Math.abs(hl.chargePct - 97.4);
-      const distNode2 = Math.abs(hl.chargePct - 102.2);
+      const distNode1 = Math.abs(activePct - 97.4);
+      const distNode2 = Math.abs(activePct - 102.2);
       const minNodeDist = Math.min(distNode1, distNode2);
       let nodeFactor = 1.0;
       if (minNodeDist < 0.7) {
-        nodeFactor = 0.58 + (minNodeDist / 0.7) * 0.42; // Up to 42% SD reduction on node
+        nodeFactor = 0.58 + (minNodeDist / 0.7) * 0.42;
       }
-      // Over-pressure penalty above 62,000 PSI
-      if (psi > 62000) {
-        nodeFactor += (psi - 62000) / 3500;
+      if (psi > cart.saamiPsi) {
+        nodeFactor += (psi - cart.saamiPsi) / 3500;
       }
       const mvSD = parseFloat(Math.max(2.4, baseSD * nodeFactor).toFixed(1));
 
-      // Seating depth jump sweet spot
       const jumpError = Math.abs(hl.jumpIn - b.sweetJump);
       const groupBonusMoa = parseFloat((-0.14 + Math.min(0.45, jumpError * 7.5)).toFixed(2));
 
-      // Meplat pointing & brass BC consistency
+      // Meplat trimming & jacket pointing trims copper tip variance without adding polymer
       const bc = parseFloat((b.bc * (hl.pointed ? 1.022 : 1.0)).toFixed(3));
       let bcSDPct = hl.brass === 'lapua' ? 0.005 : (hl.brass === 'sorted' ? 0.009 : 0.015);
       if (hl.pointed) bcSDPct *= 0.65;
 
-      // Component cost is lower than factory match ammo
       const brassCost = hl.brass === 'lapua' ? 0.65 : (hl.brass === 'sorted' ? 0.35 : 0.15);
       const roundCost = parseFloat((b.roundCost * 0.48 + brassCost + (hl.pointed ? 0.08 : 0)).toFixed(2));
 
       return {
         isHandload: true,
-        label: `${b.name} [HANDLOAD]`,
+        cartridge: cart,
+        label: `${cart.name} | ${b.name} [HL]`,
         mv,
         mvSD,
         bc,
@@ -1119,7 +1287,7 @@
     }
 
     // =========================================================================
-    // 4. THREE.JS 3D RANGE SCENE & RIFLE ANIMATIONS
+    // 5. THREE.JS 3D RANGE SCENE & RIFLE ANIMATIONS
     // =========================================================================
     const YD_TO_M = 0.9144;
     const IN_TO_M = 0.0254;
@@ -1724,7 +1892,7 @@
     }
 
     // =========================================================================
-    // 5. 3D RELOADING BENCH SCENE (CUTAWAY CARTRIDGE & SINGLE-STAGE PRESS)
+    // 6. 3D RELOADING BENCH SCENE (POWDER FUNNEL, PRESS SEATING & BARREL RACK)
     // =========================================================================
     const benchCanvas = document.getElementById('benchCanvas');
     const benchRenderer = new THREE.WebGLRenderer({ canvas: benchCanvas, antialias: true });
@@ -1733,60 +1901,139 @@
     const benchScene = new THREE.Scene();
     benchScene.background = new THREE.Color(0x11161d);
 
-    const benchCamera = new THREE.PerspectiveCamera(34, 4 / 3, 0.01, 10);
-    benchCamera.position.set(0.04, 0.05, 0.22);
-    benchCamera.lookAt(0, 0.035, 0);
+    const benchCamera = new THREE.PerspectiveCamera(36, 4 / 3, 0.01, 10);
+    benchCamera.position.set(0.02, 0.085, 0.30);
+    benchCamera.lookAt(0, 0.065, 0);
 
     const bHemi = new THREE.HemisphereLight(0xffffff, 0x334155, 1.05);
-    const bDir = new THREE.DirectionalLight(0xfff7ed, 1.25);
-    bDir.position.set(0.4, 0.8, 0.6);
+    const bDir = new THREE.DirectionalLight(0xfff7ed, 1.3);
+    bDir.position.set(0.4, 0.9, 0.7);
     benchScene.add(bHemi, bDir);
 
     // Reloading Bench Table Surface
     const tableMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.45, 0.015, 0.35),
+      new THREE.BoxGeometry(0.65, 0.018, 0.42),
       new THREE.MeshStandardMaterial({ color: 0x3b2d22, roughness: 0.85 })
     );
-    tableMesh.position.set(0, -0.0075, 0);
+    tableMesh.position.set(0, -0.009, 0);
     benchScene.add(tableMesh);
 
-    // Single-Stage Press Frame & Die Backdrop
+    // Back Gunsmithing Wall & Barrel Rack (Behind Reloading Equipment)
+    const backWallMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.75, 0.45, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x1a202c, roughness: 0.9 })
+    );
+    backWallMesh.position.set(0, 0.21, -0.18);
+    benchScene.add(backWallMesh);
+
+    const barrelRackGroup = new THREE.Group();
+    barrelRackGroup.position.set(0, 0.14, -0.165);
+
+    const rackWoodMat = new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.8 });
+    const leftRackRail = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.025), rackWoodMat);
+    leftRackRail.position.set(-0.14, 0, 0);
+    const rightRackRail = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.025), rackWoodMat);
+    rightRackRail.position.set(0.14, 0, 0);
+    barrelRackGroup.add(leftRackRail, rightRackRail);
+
+    // Spare Contoured Precision Barrels on the Wall Rack
+    const rackBarrelSpecs = [
+      { y: 0.045, rBreech: 0.0085, rMuzzle: 0.0062, color: 0x1e242b }, // Heavy MTU Stainless/Nitride
+      { y: 0.015, rBreech: 0.0080, rMuzzle: 0.0058, color: 0x94a3b8 }, // Brushed Stainless Match Barrel
+      { y: -0.015, rBreech: 0.0075, rMuzzle: 0.0052, color: 0x2d3748 }, // Fluted Marksman Contour
+      { y: -0.045, rBreech: 0.0092, rMuzzle: 0.0068, color: 0x181c22 }  // Heavy ELR Magnum Blank
+    ];
+    rackBarrelSpecs.forEach(spec => {
+      const bMat = new THREE.MeshStandardMaterial({ color: spec.color, roughness: 0.3, metalness: 0.88 });
+      const bMesh = new THREE.Mesh(new THREE.CylinderGeometry(spec.rMuzzle, spec.rBreech, 0.34, 16), bMat);
+      bMesh.rotation.z = Math.PI / 2;
+      bMesh.position.set(0, spec.y, 0.008);
+      barrelRackGroup.add(bMesh);
+    });
+    benchScene.add(barrelRackGroup);
+
+    // Powder Measure Dispenser & Drop Tube (Left Side of Bench)
+    const powderMeasureGroup = new THREE.Group();
+    powderMeasureGroup.position.set(-0.115, 0, -0.02);
+
+    const pmStand = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.006, 0.025, 0.13, 14),
+      new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.5, metalness: 0.7 })
+    );
+    pmStand.position.y = 0.065;
+    const pmBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.028, 0.032, 0.028),
+      new THREE.MeshStandardMaterial({ color: 0x2b6cb0, roughness: 0.4, metalness: 0.6 })
+    );
+    pmBody.position.set(0.015, 0.125, 0);
+    const pmHopper = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.014, 0.075, 20),
+      new THREE.MeshStandardMaterial({ color: 0x68d391, transparent: true, opacity: 0.45, roughness: 0.2 })
+    );
+    pmHopper.position.set(0.015, 0.178, 0);
+    const pmDropSpout = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.004, 0.004, 0.028, 12),
+      new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.9, roughness: 0.2 })
+    );
+    pmDropSpout.position.set(0.015, 0.098, 0);
+    powderMeasureGroup.add(pmStand, pmBody, pmHopper, pmDropSpout);
+    benchScene.add(powderMeasureGroup);
+
+    // Single-Stage Reloading Press (Center-Right of Bench)
     const pressRedMat = new THREE.MeshStandardMaterial({ color: 0x9b2c2c, roughness: 0.45, metalness: 0.5 });
     const pressSteelMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.9 });
 
     const pressGroup = new THREE.Group();
-    pressGroup.position.set(-0.055, 0, -0.045);
+    pressGroup.position.set(0.025, 0, 0.01);
 
-    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.018, 0.055), pressRedMat);
+    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.018, 0.065), pressRedMat);
     pressBase.position.y = 0.009;
-    const pressBackSpine = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.022), pressRedMat);
-    pressBackSpine.position.set(0, 0.075, -0.016);
-    const pressTopHead = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.022, 0.055), pressRedMat);
-    pressTopHead.position.set(0, 0.145, 0);
-    const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.045, 20), pressSteelMat);
-    seatingDie.position.set(0, 0.155, 0.01);
-    const pressRam = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 16), pressSteelMat);
-    pressRam.position.set(0, 0.032, 0.01);
-    const pressHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.13, 10), pressSteelMat);
-    pressHandle.rotation.z = -0.45;
-    pressHandle.position.set(0.035, 0.06, -0.015);
+    const pressBackSpine = new THREE.Mesh(new THREE.BoxGeometry(0.020, 0.175, 0.024), pressRedMat);
+    pressBackSpine.position.set(0, 0.095, -0.022);
+    const pressTopHead = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.022, 0.065), pressRedMat);
+    pressTopHead.position.set(0, 0.178, 0);
 
-    pressGroup.add(pressBase, pressBackSpine, pressTopHead, seatingDie, pressRam, pressHandle);
+    // Micrometer Bullet Seating Die mounted in top of Press
+    const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.048, 20), pressSteelMat);
+    seatingDie.position.set(0, 0.188, 0.008);
+    const dieTopStem = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.022, 16), pressSteelMat);
+    dieTopStem.position.set(0, 0.218, 0.008);
+
+    // Animated Press Handle Pivot
+    const pressHandlePivot = new THREE.Group();
+    pressHandlePivot.position.set(0.028, 0.032, 0.008);
+    const pressHandleArm = new THREE.Mesh(new THREE.CylinderGeometry(0.0032, 0.0032, 0.145, 10), pressSteelMat);
+    pressHandleArm.position.set(0.032, 0.065, 0);
+    pressHandleArm.rotation.z = -0.45;
+    const pressHandleKnob = new THREE.Mesh(
+      new THREE.SphereGeometry(0.011, 14, 14),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.4 })
+    );
+    pressHandleKnob.position.set(0.064, 0.128, 0);
+    pressHandlePivot.add(pressHandleArm, pressHandleKnob);
+
+    // Animated Press Ram & Shellholder (Moves upward into seating die when handle is pulled!)
+    const pressRamGroup = new THREE.Group();
+    pressRamGroup.position.set(0, 0.025, 0.008);
+
+    const pressRamShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.065, 16), pressSteelMat);
+    pressRamShaft.position.y = 0.015;
+    const shellHolder = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.016, 0.016, 0.008, 24),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35, metalness: 0.85 })
+    );
+    shellHolder.position.y = 0.050;
+    pressRamGroup.add(pressRamShaft, shellHolder);
+
+    pressGroup.add(pressBase, pressBackSpine, pressTopHead, seatingDie, dieTopStem, pressHandlePivot, pressRamGroup);
     benchScene.add(pressGroup);
 
-    // Interactive 3D Cartridge Assembly (Front & Center on Shellholder Pedestal)
+    // Cartridge Assembly Mounted in the Press Shellholder
     const cartridgeHolder = new THREE.Group();
-    cartridgeHolder.position.set(0.02, 0.008, 0.02);
-    benchScene.add(cartridgeHolder);
+    cartridgeHolder.position.set(0, 0.054, 0);
+    pressRamGroup.add(cartridgeHolder);
 
-    const shellPedestal = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.022, 0.026, 0.008, 24),
-      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 })
-    );
-    shellPedestal.position.y = -0.004;
-    cartridgeHolder.add(shellPedestal);
-
-    // Translucent Cutaway Brass Case + Internal Powder Column + Copper Jacketed Projectile
+    // Translucent Cutaway Brass Case + Belt + Internal Powder + Bullet + Powder Funnel + Stream
     const bBrassMat = new THREE.MeshStandardMaterial({
       color: 0xd4af37,
       roughness: 0.25,
@@ -1794,33 +2041,64 @@
       transparent: true,
       opacity: 0.68
     });
-    const bPrimerMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.95 });
-    const bPowderMat = new THREE.MeshStandardMaterial({ color: 0x1e242b, roughness: 0.95 });
+    const bPrimerMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.2, metalness: 0.95 });
+    const bPowderMat = new THREE.MeshStandardMaterial({ color: 0x14181d, roughness: 0.95 });
     const bCopperMat = new THREE.MeshStandardMaterial({ color: 0xc87533, roughness: 0.28, metalness: 0.88 });
-    const bPolymerTipMat = new THREE.MeshStandardMaterial({ color: 0xe53e3e, roughness: 0.35 });
+    const bRedPolymerMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.32 });
+    const bAluminumTipMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.18, metalness: 0.95 });
+    const bClosedMeplatMat = new THREE.MeshStandardMaterial({ color: 0xd9823b, roughness: 0.24, metalness: 0.9 });
 
     const caseBodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0068, 0.042, 24), bBrassMat);
+    const caseBeltMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0072, 0.004, 24), bBrassMat);
     const caseShoulderMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0065, 0.007, 24), bBrassMat);
     const caseNeckMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, 0.008, 24), bBrassMat);
     const primerDiscMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0028, 0.0028, 0.002, 16), bPrimerMat);
     const powderColMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0056, 0.0058, 0.036, 20), bPowderMat);
 
+    // Powder Funnel sitting on case mouth when unseated / pouring
+    const funnelGroup = new THREE.Group();
+    const funnelCone = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.0045, 0.022, 20, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0x38a169, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    );
+    funnelCone.position.y = 0.013;
+    const funnelSpout = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0045, 0.0045, 0.006, 16, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0x38a169, side: THREE.DoubleSide })
+    );
+    funnelSpout.position.y = 0.002;
+    funnelGroup.add(funnelCone, funnelSpout);
+
+    // Falling Granular Powder Stream inside Funnel
+    const powderStreamMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0014, 0.0020, 0.045, 10),
+      new THREE.MeshBasicMaterial({ color: 0x1e293b })
+    );
+    powderStreamMesh.visible = false;
+
+    // Projectile Assembly (Shank + Ogive + Tip / Meplat)
     const projectileGroup = new THREE.Group();
     const bulletShankMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0038, 0.0038, 0.018, 24), bCopperMat);
     const bulletOgiveMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0038, 0.018, 24), bCopperMat);
-    const bulletTipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0014, 0.006, 16), bPolymerTipMat);
+    const bulletTipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0014, 0.0065, 16), bRedPolymerMat);
     projectileGroup.add(bulletShankMesh, bulletOgiveMesh, bulletTipMesh);
 
-    cartridgeHolder.add(caseBodyMesh, caseShoulderMesh, caseNeckMesh, primerDiscMesh, powderColMesh, projectileGroup);
+    cartridgeHolder.add(
+      caseBodyMesh, caseBeltMesh, caseShoulderMesh, caseNeckMesh,
+      primerDiscMesh, powderColMesh, funnelGroup, powderStreamMesh, projectileGroup
+    );
 
-    function update3DCartridgePreview() {
-      const { b } = getEquipped();
+    function update3DCartridgePreview(pressStrokeFrac = 0) {
+      ensureValidCartridgeForBullet();
+      const b = BULLETS.find(x => x.id === state.eq.bullet);
+      const cart = CARTRIDGES[state.handload.cartridgeId] || CARTRIDGES[b.cases[0]];
       const hl = state.handload;
 
-      // Scale cartridge dimensions proportionally to caliber & bullet length
-      const rBody = Math.max(0.0048, (b.dia * IN_TO_M) * 0.82);
-      const rBullet = (b.dia * IN_TO_M) * 0.5;
-      const caseLenM = b.dia <= 0.224 ? 0.044 : (b.dia >= 0.375 ? 0.072 : 0.052);
+      // Distinct physical scaling per cartridge so 5.56 vs 6 GT vs 6.5 PRC vs .375 CheyTac look unmistakably different
+      const rBody = (cart.baseDiaIn * IN_TO_M) * 0.56;
+      const rNeck = (b.dia * IN_TO_M) * 0.62;
+      const rBullet = (b.dia * IN_TO_M) * 0.52;
+      const caseLenM = cart.caseLenIn * IN_TO_M;
       const bulletLenM = b.len * IN_TO_M;
 
       // Brass color reflects prep quality
@@ -1831,29 +2109,44 @@
       bPrimerMat.color.setHex(hl.brass === 'range' ? 0xd4af37 : 0xf1f5f9);
       bPowderMat.color.setHex(hl.powder === 'ball' ? 0x2d3748 : 0x14181d);
 
-      // Update Case Meshes
-      const bodyH = caseLenM * 0.74;
-      const shH = caseLenM * 0.12;
-      const neckH = caseLenM * 0.14;
+      const bodyH = caseLenM * cart.shoulderFrac;
+      const shH = caseLenM * (1.0 - cart.shoulderFrac - cart.neckFrac);
+      const neckH = caseLenM * cart.neckFrac;
 
       caseBodyMesh.scale.set(rBody / 0.0065, bodyH / 0.042, rBody / 0.0065);
       caseBodyMesh.position.y = bodyH / 2;
 
-      caseShoulderMesh.scale.set(rBody / 0.0065, shH / 0.007, rBody / 0.0065);
+      // Belted magnum band (7mm Rem Mag)
+      caseBeltMesh.visible = cart.belted;
+      if (cart.belted) {
+        caseBeltMesh.scale.set((rBody * 1.09) / 0.0072, 1.0, (rBody * 1.09) / 0.0072);
+        caseBeltMesh.position.y = 0.0045;
+      }
+
+      // Shoulder cone frustum
+      caseShoulderMesh.geometry.dispose();
+      caseShoulderMesh.geometry = new THREE.CylinderGeometry(rNeck, rBody, shH, 24);
       caseShoulderMesh.position.y = bodyH + shH / 2;
 
-      caseNeckMesh.scale.set((rBullet * 1.08) / 0.0042, neckH / 0.008, (rBullet * 1.08) / 0.0042);
+      caseNeckMesh.scale.set(rNeck / 0.0042, neckH / 0.008, rNeck / 0.0042);
       caseNeckMesh.position.y = bodyH + shH + neckH / 2;
 
       primerDiscMesh.position.y = 0.001;
 
-      // Update Internal Powder Column Height based on Charge %
-      const fillRatio = Math.min(1.04, Math.max(0.75, (hl.chargePct - 8) / 100));
-      const pHeight = (bodyH + shH * 0.7) * fillRatio;
+      // Internal Powder Column Height based on actual poured powder
+      const fillRatio = Math.min(1.06, Math.max(0.0, (hl.pouredChargePct / 100) * 0.88));
+      powderColMesh.visible = hl.pouredChargePct > 0.5;
+      const pHeight = Math.max(0.002, (bodyH + shH * 0.65) * fillRatio);
       powderColMesh.scale.set((rBody * 0.88) / 0.0056, pHeight / 0.036, (rBody * 0.88) / 0.0056);
       powderColMesh.position.y = 0.003 + pHeight / 2;
 
-      // Update Projectile & Seating Depth (Longer jump = seated deeper inside case)
+      // Funnel & Powder Stream visibility
+      funnelGroup.visible = !hl.isSeated && pressStrokeFrac === 0;
+      funnelGroup.position.y = caseLenM;
+      powderStreamMesh.visible = state.pouringPowder && !hl.isSeated;
+      powderStreamMesh.position.y = caseLenM + 0.015;
+
+      // Projectile Geometry & Authentic Tip Rendering
       const shankH = bulletLenM * 0.48;
       const ogiveH = bulletLenM * 0.52;
       bulletShankMesh.scale.set(rBullet / 0.0038, shankH / 0.018, rBullet / 0.0038);
@@ -1862,15 +2155,50 @@
       bulletOgiveMesh.scale.set(rBullet / 0.0038, ogiveH / 0.018, rBullet / 0.0038);
       bulletOgiveMesh.position.y = shankH + ogiveH / 2;
 
-      bulletTipMesh.visible = hl.pointed;
-      bulletTipMesh.position.y = shankH + ogiveH * 0.92;
+      // Tip logic:
+      // - ELD-M -> Red Polymer Tip
+      // - A-Tip -> Machined Aluminum Tip of similar size
+      // - OTM (SMK / Berger / Barnes) -> Copper open-tip, OR sharp pointed copper tip when Meplat Pointing is checked (never polymer)
+      if (b.tipType === 'eldm') {
+        bulletTipMesh.visible = true;
+        bulletTipMesh.material = bRedPolymerMat;
+        bulletTipMesh.scale.set(rBullet / 0.0038, (ogiveH * 0.42) / 0.0065, rBullet / 0.0038);
+        bulletTipMesh.position.y = shankH + ogiveH * 0.92;
+      } else if (b.tipType === 'atip') {
+        bulletTipMesh.visible = true;
+        bulletTipMesh.material = bAluminumTipMat;
+        bulletTipMesh.scale.set(rBullet / 0.0038, (ogiveH * 0.44) / 0.0065, rBullet / 0.0038);
+        bulletTipMesh.position.y = shankH + ogiveH * 0.92;
+      } else if (hl.pointed) {
+        // Pointed copper jacket meplat (same copper material, sharp closed tip)
+        bulletTipMesh.visible = true;
+        bulletTipMesh.material = bClosedMeplatMat;
+        bulletTipMesh.scale.set((rBullet * 0.78) / 0.0038, (ogiveH * 0.30) / 0.0065, (rBullet * 0.78) / 0.0038);
+        bulletTipMesh.position.y = shankH + ogiveH * 0.90;
+      } else {
+        bulletTipMesh.visible = false;
+      }
 
-      // Seat bullet into case neck; reducing jump pushes bullet outward (longer COAL)
+      // Projectile Seating Position:
+      // - If unseated and not mid-press stroke, hover bullet slightly above funnel or hide until press seats it
+      // - During press stroke, ram lifts case up into seating die and pushes bullet into neck
       const jumpOffsetM = (0.040 - hl.jumpIn) * IN_TO_M;
-      projectileGroup.position.y = caseLenM - shankH * 0.85 + jumpOffsetM;
+      const seatedY = caseLenM - shankH * 0.85 + jumpOffsetM;
+      const unseatedHoverY = caseLenM + 0.036;
+
+      if (hl.isSeated) {
+        projectileGroup.visible = true;
+        projectileGroup.position.y = seatedY;
+      } else if (pressStrokeFrac > 0) {
+        projectileGroup.visible = true;
+        const seatProg = Math.min(1.0, pressStrokeFrac);
+        projectileGroup.position.y = unseatedHoverY + (seatedY - unseatedHoverY) * seatProg;
+      } else {
+        projectileGroup.visible = false;
+      }
     }
 
-    let benchYaw = 0.35;
+    let benchYaw = -0.25;
     let benchDragging = false, benchLastX = 0;
     benchCanvas.addEventListener('pointerdown', e => { benchDragging = true; benchLastX = e.clientX; });
     window.addEventListener('pointermove', e => {
@@ -1890,87 +2218,215 @@
         benchCamera.aspect = w / h;
         benchCamera.updateProjectionMatrix();
       }
-      if (!benchDragging) benchYaw += 0.006;
+
+      // Pouring Powder into Funnel Simulation
+      if (state.pouringPowder && !state.handload.isSeated) {
+        state.handload.pouredChargePct = Math.min(108.0, parseFloat((state.handload.pouredChargePct + 0.45).toFixed(1)));
+        updateBenchUIReadouts();
+        if (state.handload.pouredChargePct >= state.handload.targetChargePct) {
+          // Auto-stop right at target charge weight (like an electronic trickler) unless user holds again
+          stopPouringPowder();
+        }
+      }
+
+      // Single-Stage Press Seating Animation
+      let strokeFrac = 0;
+      if (state.pressAnimTimer >= 0) {
+        state.pressAnimTimer += 0.035;
+        if (state.pressAnimTimer <= 1.0) {
+          // Downstroke: Handle rotates forward/down, Ram lifts cartridge into Seating Die
+          const p = state.pressAnimTimer;
+          pressHandlePivot.rotation.z = p * 1.45;
+          pressRamGroup.position.y = 0.025 + p * 0.048;
+          strokeFrac = p;
+          if (p >= 0.95) state.handload.isSeated = true;
+        } else if (state.pressAnimTimer <= 2.0) {
+          // Return upstroke: Ram lowers with seated cartridge
+          const p = 2.0 - state.pressAnimTimer;
+          pressHandlePivot.rotation.z = p * 1.45;
+          pressRamGroup.position.y = 0.025 + p * 0.048;
+          strokeFrac = 1.0;
+        } else {
+          pressHandlePivot.rotation.z = 0;
+          pressRamGroup.position.y = 0.025;
+          state.pressAnimTimer = -1;
+          updateBenchUIReadouts();
+        }
+      }
+
+      update3DCartridgePreview(strokeFrac);
       cartridgeHolder.rotation.y = benchYaw;
       benchRenderer.render(benchScene, benchCamera);
       requestAnimationFrame(animateBench);
     }
 
-    // Bench UI Controls & Sync
+    // =========================================================================
+    // 7. RELOADING BENCH UI & WORKFLOW CONTROLS
+    // =========================================================================
+    function populateCartridgeDropdown() {
+      ensureValidCartridgeForBullet();
+      const { b } = getEquipped();
+      const sel = document.getElementById('b-sel-cartridge');
+      sel.innerHTML = '';
+      b.cases.forEach(cId => {
+        const c = CARTRIDGES[cId];
+        const opt = document.createElement('option');
+        opt.value = cId;
+        opt.innerText = `${c.name} (~${c.capH2O.toFixed(1)} gr H₂O)`;
+        if (cId === state.handload.cartridgeId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
     function openBench() {
       state.benchOpen = true;
       document.getElementById('modal-bench').classList.add('open');
+      populateCartridgeDropdown();
       document.getElementById('b-sel-brass').value = state.handload.brass;
       document.getElementById('b-sel-powder').value = state.handload.powder;
-      document.getElementById('b-slider-charge').value = state.handload.chargePct;
+      document.getElementById('b-slider-charge').value = state.handload.targetChargePct;
       document.getElementById('b-slider-jump').value = state.handload.jumpIn;
       document.getElementById('b-chk-point').checked = state.handload.pointed;
-      updateBenchCalculations();
+      updateBenchUIReadouts();
       requestAnimationFrame(animateBench);
     }
 
     function closeBench() {
       state.benchOpen = false;
+      state.pouringPowder = false;
       document.getElementById('modal-bench').classList.remove('open');
     }
 
-    function setBenchChargePct(val) {
-      state.handload.chargePct = parseFloat(val);
-      updateBenchCalculations();
+    function selectBenchCartridge(cId) {
+      state.handload.cartridgeId = cId;
+      resetBenchRound();
     }
 
-    function stepBenchCharge(deltaGr) {
+    function resetBenchRound() {
+      state.handload.pouredChargePct = 0.0;
+      state.handload.isSeated = false;
+      state.pouringPowder = false;
+      state.pressAnimTimer = -1;
+      updateBenchUIReadouts();
+    }
+
+    function startPouringPowder() {
+      if (state.handload.isSeated) {
+        resetBenchRound();
+      }
+      state.pouringPowder = true;
+    }
+
+    function stopPouringPowder() {
+      state.pouringPowder = false;
+      updateBenchUIReadouts();
+    }
+
+    function triggerPressSeat() {
+      if (state.pressAnimTimer >= 0) return;
+      if (state.handload.pouredChargePct < 50) {
+        alert("Pour powder through the funnel into the case before seating the projectile!");
+        return;
+      }
+      state.pressAnimTimer = 0.0;
+    }
+
+    function setTargetChargePct(val) {
+      state.handload.targetChargePct = parseFloat(val);
+      // If user adjusts target charge on an already-seated round, reset round so they pour & seat the new load
+      if (state.handload.isSeated) {
+        state.handload.pouredChargePct = 0.0;
+        state.handload.isSeated = false;
+      }
+      updateBenchUIReadouts();
+    }
+
+    function stepTargetCharge(deltaGr) {
       const { b } = getEquipped();
-      const stepPct = (deltaGr / b.baseGr) * 100;
-      state.handload.chargePct = Math.min(106, Math.max(92, parseFloat((state.handload.chargePct + stepPct).toFixed(1))));
-      document.getElementById('b-slider-charge').value = state.handload.chargePct;
-      updateBenchCalculations();
+      const cart = CARTRIDGES[state.handload.cartridgeId] || CARTRIDGES[b.cases[0]];
+      const stepPct = (deltaGr / cart.baseChargeGr) * 100;
+      const nextVal = Math.min(106, Math.max(92, parseFloat((state.handload.targetChargePct + stepPct).toFixed(1))));
+      document.getElementById('b-slider-charge').value = nextVal;
+      setTargetChargePct(nextVal);
     }
 
     function setBenchJump(val) {
       state.handload.jumpIn = parseFloat(val);
-      updateBenchCalculations();
+      updateBenchUIReadouts();
     }
 
     function stepBenchJump(delta) {
       state.handload.jumpIn = Math.min(0.080, Math.max(0.005, parseFloat((state.handload.jumpIn + delta).toFixed(3))));
       document.getElementById('b-slider-jump').value = state.handload.jumpIn;
-      updateBenchCalculations();
+      updateBenchUIReadouts();
     }
 
-    function updateBenchCalculations() {
+    function updateBenchRecipeParams() {
       state.handload.brass = document.getElementById('b-sel-brass').value;
       state.handload.powder = document.getElementById('b-sel-powder').value;
       state.handload.pointed = document.getElementById('b-chk-point').checked;
+      updateBenchUIReadouts();
+    }
 
+    function updateBenchUIReadouts() {
+      ensureValidCartridgeForBullet();
       const { b } = getEquipped();
-      const prevActive = state.handload.active;
-      state.handload.active = true;
-      const specs = computeActiveAmmoSpecs();
-      state.handload.active = prevActive;
+      const hl = state.handload;
+      const cart = CARTRIDGES[hl.cartridgeId] || CARTRIDGES[b.cases[0]];
 
-      const chargeGr = (b.baseGr * (state.handload.chargePct / 100)).toFixed(1);
+      const prevActive = hl.active;
+      hl.active = true;
+      const previewPct = hl.pouredChargePct > 0 ? hl.pouredChargePct : hl.targetChargePct;
+      const specs = computeActiveAmmoSpecs(previewPct);
+      hl.active = prevActive;
+
+      const targetGr = (cart.baseChargeGr * (hl.targetChargePct / 100)).toFixed(1);
+      const pouredGr = (cart.baseChargeGr * (hl.pouredChargePct / 100)).toFixed(1);
+
+      document.getElementById('b3d-cart').innerText = cart.name;
+      document.getElementById('b3d-cap').innerText = cart.capH2O.toFixed(1);
       document.getElementById('b3d-bullet').innerText = b.name;
-      document.getElementById('b3d-fill').innerText = `${(state.handload.chargePct - 6).toFixed(1)}%`;
-      document.getElementById('b3d-jump').innerText = `${state.handload.jumpIn.toFixed(3)}"`;
+      document.getElementById('b3d-poured').innerText = `${pouredGr} / ${targetGr} gr`;
+      document.getElementById('b3d-jump').innerText = `${hl.jumpIn.toFixed(3)}"`;
 
-      document.getElementById('b-charge-pct').innerText = `${state.handload.chargePct.toFixed(1)}%`;
-      document.getElementById('b-disp-charge').innerText = `${chargeGr} gr`;
-      document.getElementById('b-disp-jump').innerText = `${state.handload.jumpIn.toFixed(3)}"`;
+      document.getElementById('b-charge-pct').innerText = `${hl.targetChargePct.toFixed(1)}%`;
+      document.getElementById('b-disp-target-gr').innerText = `${targetGr} gr`;
+      document.getElementById('b-disp-jump').innerText = `${hl.jumpIn.toFixed(3)}"`;
 
       document.getElementById('b-stat-mv').innerText = `${specs.mv} fps`;
       document.getElementById('b-stat-sd').innerText = `${specs.mvSD.toFixed(1)} fps`;
       document.getElementById('b-stat-bc').innerText = `${specs.bc.toFixed(3)}`;
       document.getElementById('b-stat-moa').innerText = `${specs.groupBonusMoa >= 0 ? '+' : ''}${specs.groupBonusMoa.toFixed(2)} MOA`;
 
+      // Stage Banner & Button Enablement
+      const stageEl = document.getElementById('b3d-stage-msg');
+      const equipBtn = document.getElementById('btn-equip-handload');
+      if (hl.isSeated) {
+        stageEl.innerText = `ROUND COMPLETE (${pouredGr} gr ${cart.name}) — READY TO EQUIP`;
+        stageEl.style.color = '#68d391';
+        stageEl.style.borderColor = '#38a169';
+        equipBtn.disabled = false;
+      } else if (hl.pouredChargePct > 0) {
+        stageEl.innerText = `CHARGED (${pouredGr} / ${targetGr} gr) — PULL PRESS HANDLE TO SEAT BULLET`;
+        stageEl.style.color = '#63b3ed';
+        stageEl.style.borderColor = '#3182ce';
+        equipBtn.disabled = true;
+      } else {
+        stageEl.innerText = `EMPTY CASE — HOLD "FUNNEL POWDER" TO POUR ${targetGr} gr`;
+        stageEl.style.color = '#e5a93b';
+        stageEl.style.borderColor = '#e5a93b';
+        equipBtn.disabled = true;
+      }
+
       // Pressure Gauge
+      document.getElementById('bench-saami-lbl').innerText = cart.saamiPsi.toLocaleString();
       document.getElementById('bench-psi-lbl').innerText = `${specs.psi.toLocaleString()} PSI`;
-      const pctBar = Math.min(100, Math.max(20, ((specs.psi - 42000) / 26000) * 100));
+      const pctBar = Math.min(100, Math.max(15, ((specs.psi - (cart.saamiPsi * 0.65)) / (cart.saamiPsi * 0.45)) * 100));
       const barEl = document.getElementById('bench-psi-bar');
       barEl.style.width = `${pctBar}%`;
 
       const noteEl = document.getElementById('bench-node-note');
-      if (specs.psi > 62000) {
+      if (specs.psi > cart.saamiPsi) {
         barEl.style.background = '#e53e3e';
         document.getElementById('bench-psi-lbl').style.color = '#fc8181';
         noteEl.innerText = "WARNING: Over SAAMI max pressure! High SD & flattened primers.";
@@ -1983,14 +2439,13 @@
       } else {
         barEl.style.background = '#e5a93b';
         document.getElementById('bench-psi-lbl').style.color = '#e5a93b';
-        noteEl.innerText = "Safe pressure. Adjust charge weight to find a low-SD node.";
+        noteEl.innerText = "Safe chamber pressure. Tune charge weight to find a low-SD node.";
         noteEl.style.color = 'var(--muted)';
       }
-
-      update3DCartridgePreview();
     }
 
     function equipCustomHandload() {
+      if (!state.handload.isSeated) return;
       state.handload.active = true;
       state.chronoLog = [];
       updateChronoHUD();
@@ -2011,7 +2466,7 @@
     }
 
     // =========================================================================
-    // 6. 3D RK4 + SPIN DRIFT + CORIOLIS + IN-FLIGHT TRANSONIC PERTURBATION
+    // 8. 3D RK4 + SPIN DRIFT + CORIOLIS + IN-FLIGHT TRANSONIC PERTURBATION
     // =========================================================================
     function simulate3DTrajectory(params) {
       const {
@@ -2212,7 +2667,7 @@
     }
 
     // =========================================================================
-    // 7. POP-UP SOLVER & KESTREL HELPERS
+    // 9. POP-UP SOLVER & KESTREL HELPERS
     // =========================================================================
     function runPopSolver() {
       const { b, ammoSpecs } = getEquipped();
@@ -2272,7 +2727,7 @@
     }
 
     // =========================================================================
-    // 8. FIRING ROUND IN 3D SPACE
+    // 10. FIRING ROUND IN 3D SPACE
     // =========================================================================
     function fireRound() {
       if (state.inFlight || state.benchOpen) return;
@@ -2298,7 +2753,6 @@
       const actualMV = gaussianRandom(ammoSpecs.mv, ammoSpecs.mvSD);
       const actualBC = gaussianRandom(ammoSpecs.bc, ammoSpecs.bc * ammoSpecs.bcSDPct);
 
-      // Record velocity on Range Chronograph HUD
       state.chronoLog.push(actualMV);
       if (state.chronoLog.length > 10) state.chronoLog.shift();
       updateChronoHUD();
@@ -2376,7 +2830,7 @@
     }
 
     // =========================================================================
-    // 9. DUAL-CAMERA RANGE RENDER LOOP
+    // 11. DUAL-CAMERA RANGE RENDER LOOP
     // =========================================================================
     const retCanvas = document.getElementById('reticleCanvas');
     const rCtx = retCanvas.getContext('2d');
@@ -2799,7 +3253,7 @@
     }
 
     // =========================================================================
-    // 10. CONTROLS, RANGE SETUP & ARMORY UI
+    // 12. CONTROLS, RANGE SETUP & ARMORY UI
     // =========================================================================
     function changeRangeSetup() {
       state.targetType = document.getElementById('sel-target-type').value;
@@ -2860,10 +3314,12 @@
     }
 
     function updateTopUI() {
-      const { o, ammoSpecs } = getEquipped();
+      const { ammoSpecs } = getEquipped();
       document.getElementById('ui-cash').innerText = `$${state.cash.toFixed(2)}`;
-      document.getElementById('ui-rifle-summary').innerText = `${ammoSpecs.label} | ${o.maxZoom}x ${o.ffp ? 'FFP' : 'SFP'}`;
+      document.getElementById('ui-rifle-summary').innerText = ammoSpecs.label;
       document.getElementById('ui-ammo-cost').innerText = `-$${ammoSpecs.roundCost.toFixed(2)}/rd`;
+
+      const { o } = getEquipped();
       document.getElementById('hud-focal').innerText = o.ffp ? '(FFP)' : '(SFP)';
 
       const kesBtn = document.getElementById('btn-kestrel');
@@ -2923,7 +3379,15 @@
         { title: 'Factory Cases & Propellant (Overridden when Handload Equipped)', key: 'ammo', items: BRASS_POWDER, fmt: x => x.desc },
         { title: 'Barrels & Actions', key: 'barrel', items: BARRELS, fmt: x => x.desc },
         { title: 'Rifle Chassis', key: 'chassis', items: CHASSIS, fmt: x => x.desc },
-        { title: 'Precision Projectiles (25-Bullet Library)', key: 'bullet', items: BULLETS, fmt: x => `G7 BC: ${x.bc} | Base MV: ${x.mv} fps | Len: ${x.len}" | $${x.roundCost.toFixed(2)}/rd` }
+        {
+          title: 'Precision Projectiles (25-Bullet Library)',
+          key: 'bullet',
+          items: BULLETS,
+          fmt: x => {
+            const cNames = x.cases.map(id => CARTRIDGES[id].name).join(' / ');
+            return `Chamber: ${cNames} | G7 BC: ${x.bc} | Base MV: ${x.mv} fps | $${x.roundCost.toFixed(2)}/rd`;
+          }
+        }
       ];
 
       sections.forEach(sec => {
@@ -2974,6 +3438,10 @@
         document.getElementById('disp-zoom-btn').innerText = `${state.zoom}x`;
       }
       if (cat === 'bullet') {
+        ensureValidCartridgeForBullet();
+        state.handload.pouredChargePct = 0.0;
+        state.handload.isSeated = false;
+        state.handload.active = false;
         state.chronoLog = [];
         updateChronoHUD();
       }
