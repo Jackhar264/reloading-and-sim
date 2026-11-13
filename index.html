@@ -437,6 +437,10 @@
       border-radius: 7px;
       padding: 7px 10px;
     }
+    .bench-card.highlight-step {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(229, 169, 59, 0.35);
+    }
     .bench-row {
       display: flex;
       justify-content: space-between;
@@ -497,6 +501,12 @@
       padding: 9px 6px;
     }
     .btn-seat:active { background: #975a16; }
+    .btn-seat:disabled {
+      background: #374151;
+      border-color: #4b5563;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
     .btn-load-equip {
       background: var(--hit);
       color: #fff;
@@ -695,7 +705,7 @@
             <div>Jump: <b id="b3d-jump" style="color:#cbd5e1;">0.020"</b> | COAL: <b id="b3d-coal" style="color:#e2e8f0;">2.260"</b></div>
           </div>
           <div class="bench-stage-badge" id="b3d-stage-msg">
-            STAGE 1: FUNNEL POWDER INTO CASE, THEN SEAT BULLET WITH PRESS
+            STAGE 1: FUNNEL POWDER INTO CASE
           </div>
         </div>
 
@@ -720,7 +730,7 @@
             <div class="pressure-bar-fill" id="bench-psi-bar"></div>
           </div>
           <div id="bench-node-note" style="font-size:0.7rem; color:var(--muted); margin-top:4px;">
-            Pour target powder charge with funnel, then cycle press to seat bullet.
+            1. Funnel powder  2. Set seating depth  3. Pull press handle to seat.
           </div>
         </div>
       </div>
@@ -793,14 +803,15 @@
           <input type="range" id="b-slider-charge" min="92" max="106" step="0.2" value="100" oninput="setTargetChargePct(this.value)">
         </div>
 
-        <!-- Seating Depth / Bullet Jump -->
-        <div class="bench-card">
+        <!-- Seating Depth / Bullet Jump (Mandatory Step Before Seating Bullet) -->
+        <div class="bench-card" id="card-seating-depth">
           <div class="bench-row">
-            <span>Die Seating Depth (Jump off Lands)</span>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchJump(-0.005)">-.005"</button>
+            <span>Die Seating Depth (<b id="b-jump-status" style="color:var(--accent);">SET REQUIRED</b>)</span>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <button class="btn-mini" style="padding:3px 7px;" onclick="stepBenchJump(-0.005)">-.005"</button>
               <span class="readout" id="b-disp-jump">0.020"</span>
-              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchJump(+0.005)">+.005"</button>
+              <button class="btn-mini" style="padding:3px 7px;" onclick="stepBenchJump(+0.005)">+.005"</button>
+              <button class="btn-mini" style="padding:3px 7px; font-size:0.7rem; background:#2b6cb0;" onclick="confirmBenchJump()">LOCK</button>
             </div>
           </div>
           <input type="range" id="b-slider-jump" min="0.005" max="0.080" step="0.005" value="0.020" oninput="setBenchJump(this.value)">
@@ -1038,7 +1049,7 @@
     // =========================================================================
     // 4. PLAYER STATE, HANDLOAD RECIPE & INTERACTIVE BENCH STATE
     // =========================================================================
-    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v2';
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v3';
     const DEFAULT_SAVE = {
       cash: 250.00,
       unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
@@ -1057,6 +1068,7 @@
         powder: 'extruded',
         targetChargePct: 100.0,
         pouredChargePct: 100.0,
+        jumpSet: false,
         isSeated: true,
         jumpIn: 0.020,
         pointed: false
@@ -1881,7 +1893,7 @@
     }
 
     // =========================================================================
-    // 6. HIGH-FIDELITY 3D RELOADING BENCH SCENE (POWDER CHARGER & PRESS)
+    // 6. LOWER-FRAMED 3D RELOADING BENCH & NON-CLIPPING SINGLE-STAGE PRESS
     // =========================================================================
     const benchCanvas = document.getElementById('benchCanvas');
     const benchRenderer = new THREE.WebGLRenderer({ canvas: benchCanvas, antialias: true });
@@ -1890,9 +1902,10 @@
     const benchScene = new THREE.Scene();
     benchScene.background = new THREE.Color(0x0f1319);
 
-    const benchCamera = new THREE.PerspectiveCamera(35, 4 / 3, 0.01, 10);
-    benchCamera.position.set(0.01, 0.088, 0.285);
-    benchCamera.lookAt(0, 0.068, 0);
+    // Lowered camera framing so the entire press, lever, and magnum cartridges fit comfortably in view
+    const benchCamera = new THREE.PerspectiveCamera(38, 4 / 3, 0.01, 10);
+    benchCamera.position.set(0.015, 0.075, 0.34);
+    benchCamera.lookAt(0, 0.052, 0);
 
     const bHemi = new THREE.HemisphereLight(0xe2e8f0, 0x334155, 0.95);
     const bKey = new THREE.DirectionalLight(0xfff7ed, 1.35);
@@ -1901,36 +1914,40 @@
     bRim.position.set(-0.4, 0.4, -0.4);
     benchScene.add(bHemi, bKey, bRim);
 
+    // Bench World Group shifted downward (y = -0.042) so the press sits low on the screen
+    const benchWorld = new THREE.Group();
+    benchWorld.position.set(0, -0.042, 0);
+    benchScene.add(benchWorld);
+
     // Hardwood Reloading Bench Top + Front Steel Edge Trim
     const tableMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.68, 0.022, 0.44),
+      new THREE.BoxGeometry(0.72, 0.022, 0.46),
       new THREE.MeshStandardMaterial({ color: 0x453222, roughness: 0.78 })
     );
     tableMesh.position.set(0, -0.011, 0);
     const benchEdgeTrim = new THREE.Mesh(
-      new THREE.BoxGeometry(0.68, 0.024, 0.008),
+      new THREE.BoxGeometry(0.72, 0.024, 0.008),
       new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 })
     );
-    benchEdgeTrim.position.set(0, -0.011, 0.22);
-    benchScene.add(tableMesh, benchEdgeTrim);
+    benchEdgeTrim.position.set(0, -0.011, 0.23);
+    benchWorld.add(tableMesh, benchEdgeTrim);
 
-    // Clean Gunsmithing Pegboard Wall Backdrop (No barrel rack)
+    // Clean Gunsmithing Wall Backdrop (No barrel rack)
     const backWallMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.78, 0.48, 0.02),
+      new THREE.BoxGeometry(0.84, 0.52, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x171c24, roughness: 0.92 })
     );
-    backWallMesh.position.set(0, 0.22, -0.18);
-    benchScene.add(backWallMesh);
+    backWallMesh.position.set(0, 0.24, -0.19);
+    benchWorld.add(backWallMesh);
 
-    // High-Fidelity Powder Measure / Charger Assembly (Left Side of Bench)
+    // Powder Measure / Charger Assembly (Left Side of Bench)
     const pmBlueMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.38, metalness: 0.55 });
     const pmSteelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.22, metalness: 0.92 });
     const pmDarkSteelMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.8 });
 
     const powderMeasureGroup = new THREE.Group();
-    powderMeasureGroup.position.set(-0.115, 0, -0.01);
+    powderMeasureGroup.position.set(-0.125, 0, -0.01);
 
-    // Bench C-Clamp & Vertical Support Stand
     const pmClampBase = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.012, 0.044), pmDarkSteelMat);
     pmClampBase.position.y = 0.006;
     const pmStandPost = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0075, 0.135, 16), pmSteelMat);
@@ -1938,12 +1955,10 @@
     const pmBracketArm = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.014, 0.020), pmBlueMat);
     pmBracketArm.position.set(0.008, 0.125, 0);
 
-    // Cast Powder Measure Main Housing & Rotor Drum
     const pmMainCasting = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.038, 24), pmBlueMat);
     pmMainCasting.rotation.z = Math.PI / 2;
     pmMainCasting.position.set(0.022, 0.125, 0);
 
-    // Rotating Metering Drum + Micrometer Thimble + Operating Handle
     const pmRotorPivot = new THREE.Group();
     pmRotorPivot.position.set(0.022, 0.125, 0);
 
@@ -1966,7 +1981,6 @@
 
     pmRotorPivot.add(pmDrum, pmMicrometerStem, pmMicrometerThimble, pmHandleArm, pmHandleKnob);
 
-    // Translucent Hopper with Internal Powder Baffle & Top Lid
     const pmHopperCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.013, 0.012, 24), pmSteelMat);
     pmHopperCollar.position.set(0.022, 0.145, 0);
 
@@ -1988,7 +2002,6 @@
     const pmHopperLid = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.006, 24), pmDarkSteelMat);
     pmHopperLid.position.set(0.022, 0.233, 0);
 
-    // Tapered Brass/Steel Drop Tube
     const pmDropTube = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0038, 0.036, 16), pmSteelMat);
     pmDropTube.position.set(0.022, 0.092, 0);
 
@@ -1996,62 +2009,82 @@
       pmClampBase, pmStandPost, pmBracketArm, pmMainCasting, pmRotorPivot,
       pmHopperCollar, pmHopper, pmHopperPowder, pmBaffleCone, pmHopperLid, pmDropTube
     );
-    benchScene.add(powderMeasureGroup);
+    benchWorld.add(powderMeasureGroup);
 
-    // High-Fidelity Cast O-Frame Single-Stage Reloading Press (Center-Right)
+    // High-Fidelity Cast O-Frame Single-Stage Reloading Press (Mechanically Connected Handle)
     const pressRedMat = new THREE.MeshStandardMaterial({ color: 0x9b2c2c, roughness: 0.42, metalness: 0.52 });
     const pressSteelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.22, metalness: 0.92 });
     const pressDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.8 });
 
     const pressGroup = new THREE.Group();
-    pressGroup.position.set(0.028, 0, 0.01);
+    pressGroup.position.set(0.025, 0, 0.01);
 
-    // Bolted Base Plate & Dual O-Frame Pillars
-    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.018, 0.072), pressRedMat);
+    // Heavy Cast Base & Ram Boss
+    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.018, 0.074), pressRedMat);
     pressBase.position.y = 0.009;
 
-    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.165, 16), pressRedMat);
-    leftPillar.position.set(-0.024, 0.098, -0.012);
-    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.165, 16), pressRedMat);
-    rightPillar.position.set(0.024, 0.098, -0.012);
-    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.155, 0.012), pressRedMat);
-    backWeb.position.set(0, 0.096, -0.022);
+    const ramBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.036, 20), pressRedMat);
+    ramBoss.position.set(0, 0.024, 0.008);
 
-    const pressTopHead = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.024, 24), pressRedMat);
-    pressTopHead.position.set(0, 0.180, 0.004);
+    // Dual O-Frame Pillars + Rear Rib + Top Die Crown (Tall enough for .375 CheyTac)
+    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
+    leftPillar.position.set(-0.026, 0.108, -0.014);
+    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
+    rightPillar.position.set(0.026, 0.108, -0.014);
+    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.175, 0.012), pressRedMat);
+    backWeb.position.set(0, 0.106, -0.024);
 
-    // Micrometer Bullet Seating Die (Lock Ring + Die Body + Knurled Micrometer Thimble)
+    const pressTopHead = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.024, 24), pressRedMat);
+    pressTopHead.position.set(0, 0.200, 0.004);
+
+    // Micrometer Bullet Seating Die
     const dieLockRing = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0155, 0.007, 24), pressDarkMat);
-    dieLockRing.position.set(0, 0.195, 0.008);
+    dieLockRing.position.set(0, 0.215, 0.008);
     const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, 0.0115, 0.042, 24), pressSteelMat);
-    seatingDie.position.set(0, 0.215, 0.008);
+    seatingDie.position.set(0, 0.235, 0.008);
     const dieThimble = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.018, 24), pressDarkMat);
-    dieThimble.position.set(0, 0.242, 0.008);
+    dieThimble.position.set(0, 0.262, 0.008);
     const dieTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0075, 0.012, 18), pressSteelMat);
-    dieTopCap.position.set(0, 0.256, 0.008);
+    dieTopCap.position.set(0, 0.276, 0.008);
 
-    // Compound Toggle Linkage & Bent Steel Operating Lever
+    // External Pivot Cross-Shaft & Side Linkage Lugs (Outside the right pillar — zero clipping!)
+    const crossShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.094, 16), pressSteelMat);
+    crossShaft.rotation.z = Math.PI / 2;
+    crossShaft.position.set(0.004, 0.024, 0.008);
+
+    const rightPivotBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.014, 18), pressDarkMat);
+    rightPivotBoss.rotation.z = Math.PI / 2;
+    rightPivotBoss.position.set(0.044, 0.024, 0.008);
+
+    // Articulated Toggle Link Connecting Cross-Shaft to Bottom of Ram
+    const toggleLinkMesh = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.032, 0.012), pressDarkMat);
+    toggleLinkMesh.position.set(0, 0.016, 0.008);
+
+    // Continuous Connected Press Handle (Pivots cleanly around X axis at x = 0.048, outside press body)
     const pressHandlePivot = new THREE.Group();
-    pressHandlePivot.position.set(0.032, 0.026, 0.008);
+    pressHandlePivot.position.set(0.048, 0.024, 0.008);
 
-    const toggleLinkLeft = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.038, 0.012), pressDarkMat);
-    toggleLinkLeft.position.set(-0.014, 0.016, 0);
-    toggleLinkLeft.rotation.z = 0.35;
+    const handleHub = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.014, 18), pressSteelMat);
+    handleHub.rotation.z = Math.PI / 2;
 
-    const pressHandleLower = new THREE.Mesh(new THREE.CylinderGeometry(0.0034, 0.0038, 0.085, 12), pressSteelMat);
-    pressHandleLower.position.set(0.022, 0.038, 0);
-    pressHandleLower.rotation.z = -0.52;
+    // Continuous single steel lever shaft from hub straight up-and-out to knob
+    const leverRod = new THREE.Mesh(new THREE.CylinderGeometry(0.0036, 0.0042, 0.165, 14), pressSteelMat);
+    leverRod.position.set(0.014, 0.078, 0.022);
+    leverRod.rotation.z = -0.17;
+    leverRod.rotation.x = 0.27;
 
-    const pressHandleUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.0032, 0.0034, 0.075, 12), pressSteelMat);
-    pressHandleUpper.position.set(0.052, 0.102, 0);
-    pressHandleUpper.rotation.z = -0.25;
+    const handleCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0045, 0.010, 14), pressDarkMat);
+    handleCollar.position.set(0.026, 0.148, 0.041);
+    handleCollar.rotation.z = -0.17;
+    handleCollar.rotation.x = 0.27;
 
     const pressHandleKnob = new THREE.Mesh(
-      new THREE.SphereGeometry(0.0125, 16, 16),
-      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35 })
+      new THREE.SphereGeometry(0.013, 18, 18),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.32 })
     );
-    pressHandleKnob.position.set(0.062, 0.140, 0);
-    pressHandlePivot.add(toggleLinkLeft, pressHandleLower, pressHandleUpper, pressHandleKnob);
+    pressHandleKnob.position.set(0.028, 0.160, 0.045);
+
+    pressHandlePivot.add(handleHub, leverRod, handleCollar, pressHandleKnob);
 
     // Animated Press Ram & Machined Shellholder
     const pressRamGroup = new THREE.Group();
@@ -2067,11 +2100,11 @@
     pressRamGroup.add(pressRamShaft, shellHolder);
 
     pressGroup.add(
-      pressBase, leftPillar, rightPillar, backWeb, pressTopHead,
+      pressBase, ramBoss, leftPillar, rightPillar, backWeb, pressTopHead,
       dieLockRing, seatingDie, dieThimble, dieTopCap,
-      pressHandlePivot, pressRamGroup
+      crossShaft, rightPivotBoss, toggleLinkMesh, pressHandlePivot, pressRamGroup
     );
-    benchScene.add(pressGroup);
+    benchWorld.add(pressGroup);
 
     // Cartridge Assembly Mounted in the Press Shellholder
     const cartridgeHolder = new THREE.Group();
@@ -2123,7 +2156,7 @@
     // Projectile Assembly (Shank + Reference Cannelure Ring + Ogive + Tip / Meplat)
     const projectileGroup = new THREE.Group();
     const bulletShankMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0038, 0.0038, 0.018, 24), bCopperMat);
-    const bulletScribeRing = new THREE.Mesh(new THREE.CylinderGeometry(0.00388, 0.00388, 0.0012, 24), bScribeMat);
+    const bulletScribeRing = new THREE.Mesh(new THREE.CylinderGeometry(0.0039, 0.0039, 0.0012, 24), bScribeMat);
     const bulletOgiveMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0038, 0.018, 24), bCopperMat);
     const bulletTipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0014, 0.0065, 16), bRedPolymerMat);
     projectileGroup.add(bulletShankMesh, bulletScribeRing, bulletOgiveMesh, bulletTipMesh);
@@ -2185,7 +2218,6 @@
       powderStreamMesh.visible = state.pouringPowder && !hl.isSeated;
       powderStreamMesh.position.y = caseLenM + 0.015;
 
-      // Animate Powder Measure Rotor Handle when pouring
       pmRotorPivot.rotation.x = state.pouringPowder ? 0.65 : 0.0;
 
       // Projectile Geometry & Authentic Tip Rendering
@@ -2219,15 +2251,13 @@
         bulletTipMesh.visible = false;
       }
 
-      // Amplified visual seating depth movement so 0.005"–0.080" jump adjustments are clearly visible
-      // Smaller jump (e.g. 0.005") seats bullet further out (longer COAL); larger jump (0.080") seats deeper into neck
+      // Amplified visual seating depth movement so 0.005"–0.080" jump adjustments are clearly visible on the cartridge
       const jumpDeltaIn = 0.040 - hl.jumpIn;
-      const visualOffsetM = (jumpDeltaIn * 4.2) * IN_TO_M;
+      const visualOffsetM = (jumpDeltaIn * 4.5) * IN_TO_M;
       const seatedY = caseLenM - shankH * 0.72 + visualOffsetM;
       const unseatedHoverY = caseLenM + 0.036;
 
-      // Also adjust Seating Die micrometer thimble height visually to match seating depth setting
-      dieThimble.position.y = 0.242 + (jumpDeltaIn * 1.8) * IN_TO_M;
+      dieThimble.position.y = 0.262 + (jumpDeltaIn * 1.8) * IN_TO_M;
 
       if (hl.isSeated) {
         projectileGroup.visible = true;
@@ -2275,18 +2305,22 @@
         state.pressAnimTimer += 0.035;
         if (state.pressAnimTimer <= 1.0) {
           const p = state.pressAnimTimer;
-          pressHandlePivot.rotation.z = p * 1.45;
-          pressRamGroup.position.y = 0.025 + p * 0.048;
+          // Smooth forward pull around X axis — stays completely outside the press casting
+          pressHandlePivot.rotation.x = p * 1.45;
+          pressRamGroup.position.y = 0.025 + p * 0.042;
+          toggleLinkMesh.position.y = 0.016 + p * 0.021;
           strokeFrac = p;
           if (p >= 0.95) state.handload.isSeated = true;
         } else if (state.pressAnimTimer <= 2.0) {
           const p = 2.0 - state.pressAnimTimer;
-          pressHandlePivot.rotation.z = p * 1.45;
-          pressRamGroup.position.y = 0.025 + p * 0.048;
+          pressHandlePivot.rotation.x = p * 1.45;
+          pressRamGroup.position.y = 0.025 + p * 0.042;
+          toggleLinkMesh.position.y = 0.016 + p * 0.021;
           strokeFrac = 1.0;
         } else {
-          pressHandlePivot.rotation.z = 0;
+          pressHandlePivot.rotation.x = 0;
           pressRamGroup.position.y = 0.025;
+          toggleLinkMesh.position.y = 0.016;
           state.pressAnimTimer = -1;
           updateBenchUIReadouts();
         }
@@ -2342,6 +2376,7 @@
 
     function resetBenchRound() {
       state.handload.pouredChargePct = 0.0;
+      state.handload.jumpSet = false;
       state.handload.isSeated = false;
       state.pouringPowder = false;
       state.pressAnimTimer = -1;
@@ -2363,7 +2398,11 @@
     function triggerPressSeat() {
       if (state.pressAnimTimer >= 0) return;
       if (state.handload.pouredChargePct < 50) {
-        alert("Pour powder through the funnel into the case before seating the projectile!");
+        alert("Step 1: Funnel powder into the case before seating the projectile!");
+        return;
+      }
+      if (!state.handload.jumpSet) {
+        alert("Step 2: Adjust or LOCK your Die Seating Depth (Jump off Lands) before pulling the press handle!");
         return;
       }
       state.pressAnimTimer = 0.0;
@@ -2373,6 +2412,7 @@
       state.handload.targetChargePct = parseFloat(val);
       if (state.handload.isSeated) {
         state.handload.pouredChargePct = 0.0;
+        state.handload.jumpSet = false;
         state.handload.isSeated = false;
       }
       updateBenchUIReadouts();
@@ -2389,12 +2429,19 @@
 
     function setBenchJump(val) {
       state.handload.jumpIn = parseFloat(val);
+      state.handload.jumpSet = true;
       updateBenchUIReadouts();
     }
 
     function stepBenchJump(delta) {
       state.handload.jumpIn = Math.min(0.080, Math.max(0.005, parseFloat((state.handload.jumpIn + delta).toFixed(3))));
+      state.handload.jumpSet = true;
       document.getElementById('b-slider-jump').value = state.handload.jumpIn;
+      updateBenchUIReadouts();
+    }
+
+    function confirmBenchJump() {
+      state.handload.jumpSet = true;
       updateBenchUIReadouts();
     }
 
@@ -2432,27 +2479,51 @@
       document.getElementById('b-disp-target-gr').innerText = `${targetGr} gr`;
       document.getElementById('b-disp-jump').innerText = `${hl.jumpIn.toFixed(3)}"`;
 
+      const jumpStatusEl = document.getElementById('b-jump-status');
+      const seatCardEl = document.getElementById('card-seating-depth');
+      if (hl.jumpSet) {
+        jumpStatusEl.innerText = 'DIE LOCKED';
+        jumpStatusEl.style.color = '#68d391';
+        seatCardEl.classList.remove('highlight-step');
+      } else {
+        jumpStatusEl.innerText = 'SET REQUIRED';
+        jumpStatusEl.style.color = '#e5a93b';
+        if (hl.pouredChargePct >= 50) seatCardEl.classList.add('highlight-step');
+        else seatCardEl.classList.remove('highlight-step');
+      }
+
       document.getElementById('b-stat-mv').innerText = `${specs.mv} fps`;
       document.getElementById('b-stat-sd').innerText = `${specs.mvSD.toFixed(1)} fps`;
       document.getElementById('b-stat-bc').innerText = `${specs.bc.toFixed(3)}`;
       document.getElementById('b-stat-moa').innerText = `${specs.groupBonusMoa >= 0 ? '+' : ''}${specs.groupBonusMoa.toFixed(2)} MOA`;
 
       const stageEl = document.getElementById('b3d-stage-msg');
+      const seatBtn = document.getElementById('btn-seat-press');
       const equipBtn = document.getElementById('btn-equip-handload');
+
       if (hl.isSeated) {
         stageEl.innerText = `ROUND COMPLETE (${pouredGr} gr ${cart.name} | COAL ${coalIn}") — READY TO EQUIP`;
         stageEl.style.color = '#68d391';
         stageEl.style.borderColor = '#38a169';
+        seatBtn.disabled = true;
         equipBtn.disabled = false;
-      } else if (hl.pouredChargePct > 0) {
-        stageEl.innerText = `CHARGED (${pouredGr} / ${targetGr} gr) — PULL PRESS HANDLE TO SEAT BULLET`;
-        stageEl.style.color = '#63b3ed';
-        stageEl.style.borderColor = '#3182ce';
-        equipBtn.disabled = true;
-      } else {
-        stageEl.innerText = `EMPTY CASE — HOLD "FUNNEL POWDER" TO POUR ${targetGr} gr`;
+      } else if (hl.pouredChargePct >= 50 && !hl.jumpSet) {
+        stageEl.innerText = `STEP 2: SET / LOCK DIE SEATING DEPTH (JUMP) BEFORE SEATING BULLET`;
         stageEl.style.color = '#e5a93b';
         stageEl.style.borderColor = '#e5a93b';
+        seatBtn.disabled = true;
+        equipBtn.disabled = true;
+      } else if (hl.pouredChargePct >= 50 && hl.jumpSet) {
+        stageEl.innerText = `STEP 3: SEATING DIE LOCKED (${hl.jumpIn.toFixed(3)}") — PULL PRESS HANDLE`;
+        stageEl.style.color = '#63b3ed';
+        stageEl.style.borderColor = '#3182ce';
+        seatBtn.disabled = false;
+        equipBtn.disabled = true;
+      } else {
+        stageEl.innerText = `STEP 1: HOLD "FUNNEL POWDER" TO POUR ${targetGr} gr`;
+        stageEl.style.color = '#e5a93b';
+        stageEl.style.borderColor = '#e5a93b';
+        seatBtn.disabled = true;
         equipBtn.disabled = true;
       }
 
@@ -2476,7 +2547,7 @@
       } else {
         barEl.style.background = '#e5a93b';
         document.getElementById('bench-psi-lbl').style.color = '#e5a93b';
-        noteEl.innerText = "Safe chamber pressure. Tune charge weight to find a low-SD node.";
+        noteEl.innerText = "1. Funnel powder  2. Set seating depth  3. Pull press handle to seat.";
         noteEl.style.color = 'var(--muted)';
       }
     }
@@ -3477,6 +3548,7 @@
       if (cat === 'bullet') {
         ensureValidCartridgeForBullet();
         state.handload.pouredChargePct = 0.0;
+        state.handload.jumpSet = false;
         state.handload.isSeated = false;
         state.handload.active = false;
         state.chronoLog = [];
