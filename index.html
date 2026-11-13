@@ -1,0 +1,2994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D Precision Rifle & Reloading Bench Simulator</title>
+  <style>
+    :root {
+      --bg: #0b0e11;
+      --panel: #151a20;
+      --panel-alt: #1e252e;
+      --accent: #e5a93b;
+      --text: #e2e8f0;
+      --muted: #8b9bb4;
+      --border: #2c3542;
+      --hit: #38a169;
+      --miss: #e53e3e;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+      margin: 0;
+      padding: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1240px;
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    @media (max-width: 820px) {
+      .app-shell { grid-template-columns: 1fr; }
+    }
+
+    /* 3D Viewport Container */
+    .viewport-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 360px;
+      background: #0d1117;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      overflow: hidden;
+    }
+    #threeCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+    #reticleCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* HUD Badges */
+    .hud-tl {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(11, 14, 17, 0.82);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+    .hud-tr {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(11, 14, 17, 0.82);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      text-align: right;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+    .hud-chrono {
+      position: absolute;
+      bottom: 44px;
+      right: 10px;
+      background: rgba(11, 14, 17, 0.85);
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid #2c3542;
+      font-size: 0.71rem;
+      text-align: right;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+    .hud-bl {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .shot-feedback {
+      background: rgba(11, 14, 17, 0.9);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+    }
+
+    /* Floating Pop-Up Windows */
+    .floating-win {
+      display: none;
+      position: absolute;
+      top: 54px;
+      left: 12px;
+      width: 310px;
+      max-width: calc(100% - 24px);
+      background: rgba(21, 26, 32, 0.97);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 25;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+      font-size: 0.78rem;
+    }
+    .floating-win.open { display: block; }
+    .win-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 5px;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--accent);
+      gap: 6px;
+    }
+    .win-close {
+      background: #2c3542;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.74rem;
+    }
+    .win-reset {
+      background: #742a2a;
+      color: #fed7d7;
+      border: 1px solid #9b2c2c;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.74rem;
+    }
+    .solver-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .solver-grid input {
+      width: 100%;
+      background: #0b0e11;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+    .solver-out {
+      display: flex;
+      justify-content: space-around;
+      background: #0b0e11;
+      padding: 7px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+    }
+
+    /* Right Control Deck */
+    .control-deck {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 7px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-alt);
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+    .cash { color: var(--hit); font-weight: 800; font-size: 0.96rem; }
+    .ammo-cost { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
+
+    .range-bar {
+      display: grid;
+      grid-template-columns: 1.2fr 1.1fr 0.75fr;
+      gap: 6px;
+    }
+    select, button {
+      font-family: inherit;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+      padding: 7px 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    select:focus, button:focus { outline: none; border-color: var(--accent); }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .ctrl-box {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+    .ctrl-lbl { font-size: 0.64rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; }
+    .ctrl-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .btn-mini {
+      background: #2a333f;
+      padding: 5px 10px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      min-width: 34px;
+    }
+    .btn-mini:active { background: var(--accent); color: #000; }
+    .readout { font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+
+    .support-bar {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 6px;
+    }
+    .bag-box {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      margin-top: 4px;
+    }
+    .btn-breath {
+      background: #234e52;
+      border-color: #2c7a7b;
+      color: #e6fffa;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 6px;
+    }
+    .btn-breath.holding { background: #319795; color: #000; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      gap: 5px;
+    }
+    .btn-tool { background: #262f3b; font-size: 0.72rem; padding: 9px 2px; }
+    .btn-tool.locked { opacity: 0.45; cursor: not-allowed; }
+    .btn-ads-btn { background: #2b4c7e; border-color: #3b6998; color: #ebf8ff; }
+    .btn-bench-btn { background: #553c2a; border-color: #9c6b3b; color: #fefcbf; }
+
+    .btn-fire {
+      width: 100%;
+      background: #c05621;
+      border-color: #dd6b20;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      padding: 12px;
+      letter-spacing: 0.06em;
+    }
+    .btn-fire:active { background: #9c4221; transform: scale(0.99); }
+    .btn-fire:disabled { background: #4a5568; border-color: #4a5568; cursor: wait; }
+
+    /* Shared Modal Overlay */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.90);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: var(--panel);
+      width: 100%;
+      max-width: 660px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+    .armory-cat {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 14px 0 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 3px;
+    }
+    .armory-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid #222933;
+      gap: 8px;
+    }
+    .armory-item h4 { margin: 0 0 2px; font-size: 0.86rem; }
+    .armory-item p { margin: 0; font-size: 0.73rem; color: var(--muted); }
+    .btn-buy {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 0.76rem;
+      white-space: nowrap;
+    }
+    .btn-buy.equipped { background: #2e3744; color: #a0aec0; cursor: default; }
+
+    /* 3D Reloading Bench Modal Styling */
+    .bench-modal-content {
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 780px) {
+      .bench-modal-content { grid-template-columns: 1fr; }
+    }
+    .bench-3d-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #10141a;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    #benchCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .bench-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(11, 14, 17, 0.85);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 5px;
+      font-size: 0.71rem;
+      line-height: 1.35;
+    }
+    .bench-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bench-card {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 10px;
+    }
+    .bench-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+    }
+    .bench-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: #0b0e11;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 4px;
+      text-align: center;
+    }
+    .bench-stat-val {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+    .pressure-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #0b0e11;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+      border: 1px solid var(--border);
+    }
+    .pressure-bar-fill {
+      height: 100%;
+      width: 65%;
+      background: var(--hit);
+      transition: width 0.15s, background 0.15s;
+    }
+    .btn-load-equip {
+      background: var(--hit);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- LEFT: 3D WEBGL VIEWPORT + SCOPE RETICLE OVERLAY -->
+    <div class="viewport-wrap" id="viewport-wrap">
+      <canvas id="threeCanvas"></canvas>
+      <canvas id="reticleCanvas"></canvas>
+
+      <div class="hud-tl">
+        <div>Dist: <b id="hud-dist" style="color:var(--accent);">500 YD</b></div>
+        <div>Optic: <b id="hud-zoom">10.0x</b> <span id="hud-focal" style="color:var(--muted);">(SFP)</span></div>
+        <div>Mode: <b id="hud-view-mode" style="color:#63b3ed;">SCOPE ADS</b></div>
+      </div>
+
+      <div class="hud-tr">
+        <div>Elev: <b id="hud-elev" style="color:var(--accent);">0.0 MRAD</b></div>
+        <div>Wind: <b id="hud-wind" style="color:var(--accent);">0.0 MRAD</b></div>
+        <div style="color:#4fd1c5;">O₂: <b id="hud-o2">100%</b></div>
+      </div>
+
+      <div class="hud-chrono" id="hud-chrono">
+        <div style="color:var(--muted); font-weight:700;">CHRONOGRAPH (<span id="chr-n">0</span> rds)</div>
+        <div>Last: <b id="chr-last" style="color:#fff;">--- fps</b></div>
+        <div>ES: <b id="chr-es" style="color:var(--accent);">--</b> | SD: <b id="chr-sd" style="color:var(--accent);">--</b></div>
+      </div>
+
+      <div class="hud-bl">
+        <div class="shot-feedback" id="hud-feedback">RANGE HOT — SELECT TARGET/DISTANCE & FIRE</div>
+      </div>
+
+      <!-- Collapsible Ballistic Solver Window -->
+      <div class="floating-win" id="win-solver">
+        <div class="win-header">
+          <span>G7 RK4 BALLISTIC SOLVER</span>
+          <button class="win-close" onclick="toggleWin('win-solver')">X</button>
+        </div>
+        <div class="solver-grid">
+          <div>
+            <label style="font-size:0.66rem; color:var(--muted);">Range (yd)</label>
+            <input type="number" id="sol-range" value="500" oninput="runPopSolver()">
+          </div>
+          <div>
+            <label style="font-size:0.66rem; color:var(--muted);">Wind (mph)</label>
+            <input type="number" id="sol-wind" value="8" oninput="runPopSolver()">
+          </div>
+          <div>
+            <label style="font-size:0.66rem; color:var(--muted);">Clock (1-12)</label>
+            <input type="number" id="sol-clock" value="3" step="0.5" oninput="runPopSolver()">
+          </div>
+        </div>
+        <div class="solver-out">
+          <span>ELEV: <b id="sol-out-elev" style="color:var(--accent);">0.00 MRAD</b></span>
+          <span>WIND: <b id="sol-out-wind" style="color:var(--accent);">0.00 MRAD</b></span>
+          <span>TOF: <b id="sol-out-tof">0.00s</b></span>
+        </div>
+      </div>
+
+      <!-- Collapsible Kestrel Weather Station Window -->
+      <div class="floating-win" id="win-kestrel">
+        <div class="win-header">
+          <span>KESTREL 5700 BALLISTICS</span>
+          <button class="win-close" onclick="toggleWin('win-kestrel')">X</button>
+        </div>
+        <div class="solver-out" style="margin-bottom:6px;">
+          <span>WIND: <b id="kes-spd" style="color:#4fd1c5;">0.0 MPH</b></span>
+          <span>FROM: <b id="kes-dir" style="color:#4fd1c5;">3:00</b></span>
+        </div>
+        <div class="solver-out" style="font-size:0.74rem; color:var(--muted);">
+          <span>TEMP: <b style="color:#fff;">64°F</b></span>
+          <span>PRESS: <b style="color:#fff;">29.92 inHg</b></span>
+          <span>LAT: <b style="color:#fff;">35.8°N</b></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: TACTICAL CONTROL DECK -->
+    <div class="control-deck">
+      <div class="top-bar">
+        <div>Bank: <span class="cash" id="ui-cash">$250.00</span></div>
+        <div id="ui-rifle-summary" style="font-weight:600; font-size:0.74rem;">.224 77gr SMK | 10x SFP</div>
+        <div class="ammo-cost" id="ui-ammo-cost">-$1.50/rd</div>
+      </div>
+
+      <!-- Target Shape & Distance Selector -->
+      <div class="range-bar">
+        <select id="sel-target-type" onchange="changeRangeSetup()">
+          <option value="ipsc_full">Full IPSC (1.0x Pay)</option>
+          <option value="ipsc_23">2/3 IPSC (1.6x Pay)</option>
+          <option value="gong_15moa">1.5 MOA Gong (3.0x Pay)</option>
+          <option value="gong_10moa">1.0 MOA Gong (5.0x Pay)</option>
+        </select>
+        <select id="sel-distance" onchange="changeRangeSetup()">
+          <option value="300">300 Yards</option>
+          <option value="400">400 Yards</option>
+          <option value="500" selected>500 Yards</option>
+          <option value="650">650 Yards</option>
+          <option value="800">800 Yards</option>
+          <option value="900">900 Yards</option>
+          <option value="1000">1,000 Yards</option>
+          <option value="1200">1,200 Yards</option>
+          <option value="1500">1,500 Yards</option>
+          <option value="1760">1 Mile (1,760 yd)</option>
+          <option value="2000">2,000 Yards</option>
+        </select>
+        <button onclick="rerollWind()">New Wind</button>
+      </div>
+
+      <!-- Turrets -->
+      <div class="controls-grid">
+        <div class="ctrl-box">
+          <div class="ctrl-lbl">Elevation (0.1 MRAD) [W/S]</div>
+          <div class="ctrl-row">
+            <button class="btn-mini" onclick="stepTurret('elev', -0.1)">-</button>
+            <span class="readout" id="disp-elev">0.0</span>
+            <button class="btn-mini" onclick="stepTurret('elev', +0.1)">+</button>
+          </div>
+        </div>
+        <div class="ctrl-box">
+          <div class="ctrl-lbl">Windage (0.1 MRAD) [A/D]</div>
+          <div class="ctrl-row">
+            <button class="btn-mini" onclick="stepTurret('wind', -0.1)">L</button>
+            <span class="readout" id="disp-wind">0.0</span>
+            <button class="btn-mini" onclick="stepTurret('wind', +0.1)">R</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rear Bag Squeeze, Zoom & Breath Hold -->
+      <div class="support-bar">
+        <div class="bag-box">
+          <div style="display:flex; justify-content:space-between; font-size:0.64rem; color:var(--muted);">
+            <span>L-HAND REAR BAG (VERT)</span>
+            <span id="disp-bag" style="color:var(--accent);">0.00 MRAD</span>
+          </div>
+          <input type="range" id="bag-slider" min="-2.5" max="2.5" step="0.05" value="0" oninput="updateBag(this.value)">
+        </div>
+        <div class="ctrl-box" style="display:flex; flex-direction:column; justify-content:space-between; gap:4px;">
+          <div class="ctrl-row" style="margin-top:0;">
+            <button class="btn-mini" style="padding:3px 8px;" onclick="stepZoom(-1)">-Z</button>
+            <span style="font-size:0.75rem; font-weight:700;" id="disp-zoom-btn">10x</span>
+            <button class="btn-mini" style="padding:3px 8px;" onclick="stepZoom(+1)">+Z</button>
+          </div>
+          <button class="btn-breath" id="btn-breath"
+            onmousedown="setBreathHold(true)" onmouseup="setBreathHold(false)" onmouseleave="setBreathHold(false)"
+            ontouchstart="setBreathHold(true); event.preventDefault();" ontouchend="setBreathHold(false)">
+            HOLD BREATH [B]
+          </button>
+        </div>
+      </div>
+
+      <!-- Utility Tools (Now includes 3D Reloading Bench) -->
+      <div class="toolbar">
+        <button class="btn-tool btn-ads-btn" onclick="toggleADS()">VIEW [V]</button>
+        <button class="btn-tool btn-bench-btn" onclick="openBench()">BENCH</button>
+        <button class="btn-tool" onclick="toggleWin('win-solver')">SOLVER</button>
+        <button class="btn-tool locked" id="btn-kestrel" onclick="openKestrel()">KESTREL</button>
+        <button class="btn-tool" onclick="openArmory()">ARMORY</button>
+      </div>
+
+      <!-- Primary Trigger -->
+      <button class="btn-fire" id="btn-fire" onclick="fireRound()">FIRE [SPACE]</button>
+    </div>
+  </div>
+
+  <!-- 3D RELOADING BENCH MODAL -->
+  <div class="modal" id="modal-bench">
+    <div class="modal-content bench-modal-content">
+      <!-- Left: 3D Cutaway Cartridge & Reloading Press Viewport -->
+      <div>
+        <div class="win-header">
+          <span>3D CARTRIDGE & PRESS BENCH</span>
+          <span style="font-size:0.7rem; color:var(--muted);">DRAG TO INSPECT</span>
+        </div>
+        <div class="bench-3d-box">
+          <canvas id="benchCanvas"></canvas>
+          <div class="bench-badge">
+            <div>Projectile: <b id="b3d-bullet" style="color:var(--accent);">.224 77gr SMK</b></div>
+            <div>Powder Fill: <b id="b3d-fill" style="color:#68d391;">94.0%</b></div>
+            <div>Jump to Lands: <b id="b3d-jump" style="color:#63b3ed;">0.020"</b></div>
+          </div>
+        </div>
+        <div class="bench-card" style="margin-top:8px;">
+          <div class="bench-row">
+            <span>Chamber Pressure (SAAMI Max 62,000 PSI)</span>
+            <b id="bench-psi-lbl" style="color:var(--hit);">54,200 PSI</b>
+          </div>
+          <div class="pressure-bar-bg">
+            <div class="pressure-bar-fill" id="bench-psi-bar"></div>
+          </div>
+          <div id="bench-node-note" style="font-size:0.7rem; color:var(--muted); margin-top:5px;">
+            Tune charge weight to locate an OCW velocity node (low SD).
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Load Development Controls -->
+      <div class="bench-controls">
+        <div class="win-header">
+          <span>HANDLOAD RECIPE TUNER</span>
+          <button class="win-close" onclick="closeBench()">CLOSE</button>
+        </div>
+
+        <!-- Calculated Ballistic Output Preview -->
+        <div class="bench-stats-grid">
+          <div>
+            <div class="ctrl-lbl">Est. MV</div>
+            <div class="bench-stat-val" id="b-stat-mv">2750 fps</div>
+          </div>
+          <div>
+            <div class="ctrl-lbl">Est. SD</div>
+            <div class="bench-stat-val" id="b-stat-sd">6.5 fps</div>
+          </div>
+          <div>
+            <div class="ctrl-lbl">Eff. G7 BC</div>
+            <div class="bench-stat-val" id="b-stat-bc">0.190</div>
+          </div>
+          <div>
+            <div class="ctrl-lbl">Load Disp.</div>
+            <div class="bench-stat-val" id="b-stat-moa">+0.00 MOA</div>
+          </div>
+        </div>
+
+        <!-- Brass & Primer Prep -->
+        <div class="bench-card">
+          <div class="bench-row">
+            <label style="font-weight:700;">Brass & Primer Prep</label>
+            <select id="b-sel-brass" onchange="updateBenchCalculations()" style="width:62%;">
+              <option value="range">Mixed Range Brass + Bulk Primers ($0.15/rd)</option>
+              <option value="sorted" selected>Weight-Sorted Brass + Match Primers ($0.35/rd)</option>
+              <option value="lapua">Annealed Match Brass + Neck-Turned ($0.65/rd)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Powder Type & Charge Weight -->
+        <div class="bench-card">
+          <div class="bench-row" style="margin-bottom:6px;">
+            <label style="font-weight:700;">Propellant Type</label>
+            <select id="b-sel-powder" onchange="updateBenchCalculations()" style="width:62%;">
+              <option value="extruded" selected>Temp-Stable Extruded Stick Powder</option>
+              <option value="ball">High-Energy Spherical Ball Powder (+65 fps)</option>
+            </select>
+          </div>
+          <div class="bench-row">
+            <span>Charge Weight (<b id="b-charge-pct" style="color:var(--accent);">100.0%</b>)</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchCharge(-0.2)">-0.2</button>
+              <span class="readout" id="b-disp-charge">24.0 gr</span>
+              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchCharge(+0.2)">+0.2</button>
+            </div>
+          </div>
+          <input type="range" id="b-slider-charge" min="92" max="106" step="0.2" value="100" oninput="setBenchChargePct(this.value)">
+        </div>
+
+        <!-- Seating Depth / Bullet Jump -->
+        <div class="bench-card">
+          <div class="bench-row">
+            <span>Seating Depth (Jump off Lands)</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchJump(-0.005)">-.005"</button>
+              <span class="readout" id="b-disp-jump">0.020"</span>
+              <button class="btn-mini" style="padding:3px 8px;" onclick="stepBenchJump(+0.005)">+.005"</button>
+            </div>
+          </div>
+          <input type="range" id="b-slider-jump" min="0.005" max="0.080" step="0.005" value="0.020" oninput="setBenchJump(this.value)">
+        </div>
+
+        <!-- Bullet Meplat Trimming / Pointing Die -->
+        <div class="bench-card">
+          <div class="bench-row">
+            <div>
+              <div style="font-weight:700;">Meplat Trimming & Bullet Pointing</div>
+              <div style="font-size:0.68rem; color:var(--muted);">Uniforms bullet tips (+2.2% G7 BC & tighter BC SD)</div>
+            </div>
+            <input type="checkbox" id="b-chk-point" onchange="updateBenchCalculations()" style="width:18px; height:18px; accent-color:var(--accent);">
+          </div>
+        </div>
+
+        <!-- Equip Handload vs Factory Ammo -->
+        <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:8px;">
+          <button class="btn-load-equip" onclick="equipCustomHandload()">EQUIP CUSTOM HANDLOAD</button>
+          <button onclick="useFactoryAmmo()" style="font-weight:700;">USE FACTORY AMMO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Armory Modal -->
+  <div class="modal" id="modal-armory">
+    <div class="modal-content">
+      <div class="win-header">
+        <span>ARMORY & EQUIPMENT UPGRADES</span>
+        <div style="display:flex; gap:6px;">
+          <button class="win-reset" onclick="resetProgress()">RESET PROGRESS</button>
+          <button class="win-close" onclick="closeArmory()">CLOSE</button>
+        </div>
+      </div>
+      <div id="armory-list"></div>
+    </div>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    // =========================================================================
+    // 1. JBM G7 DRAG TABLE & BALLISTIC HELPERS
+    // =========================================================================
+    const G7_TABLE = [
+      [0.00, 0.1198], [0.05, 0.1197], [0.10, 0.1196], [0.15, 0.1194],
+      [0.20, 0.1193], [0.25, 0.1194], [0.30, 0.1194], [0.35, 0.1194],
+      [0.40, 0.1193], [0.45, 0.1193], [0.50, 0.1194], [0.55, 0.1193],
+      [0.60, 0.1194], [0.65, 0.1197], [0.70, 0.1202], [0.725, 0.1207],
+      [0.75, 0.1215], [0.775, 0.1226], [0.80, 0.1242], [0.825, 0.1266],
+      [0.85, 0.1306], [0.875, 0.1368], [0.90, 0.1464], [0.925, 0.1660],
+      [0.95, 0.2054], [0.975, 0.2993], [1.00, 0.3803], [1.025, 0.4015],
+      [1.05, 0.4043], [1.075, 0.4034], [1.10, 0.4014], [1.125, 0.3987],
+      [1.15, 0.3955], [1.20, 0.3884], [1.25, 0.3810], [1.30, 0.3732],
+      [1.35, 0.3657], [1.40, 0.3580], [1.50, 0.3440], [1.55, 0.3376],
+      [1.60, 0.3315], [1.65, 0.3260], [1.70, 0.3209], [1.75, 0.3160],
+      [1.80, 0.3117], [1.85, 0.3078], [1.90, 0.3042], [1.95, 0.3010],
+      [2.00, 0.2980], [2.05, 0.2951], [2.10, 0.2922], [2.15, 0.2892],
+      [2.20, 0.2864], [2.25, 0.2835], [2.30, 0.2807], [2.35, 0.2779],
+      [2.40, 0.2752], [2.45, 0.2725], [2.50, 0.2697], [2.55, 0.2670],
+      [2.60, 0.2643], [2.65, 0.2615], [2.70, 0.2588], [2.75, 0.2561],
+      [2.80, 0.2533], [2.85, 0.2506], [2.90, 0.2479], [2.95, 0.2451],
+      [3.00, 0.2424], [3.10, 0.2368], [3.20, 0.2313], [3.30, 0.2258],
+      [3.40, 0.2205], [3.50, 0.2154], [3.60, 0.2106], [3.70, 0.2060],
+      [3.80, 0.2017], [3.90, 0.1975], [4.00, 0.1935], [4.20, 0.1861],
+      [4.40, 0.1793], [4.60, 0.1730], [4.80, 0.1672], [5.00, 0.1618]
+    ];
+
+    function getCd(mach) {
+      if (mach <= G7_TABLE[0][0]) return G7_TABLE[0][1];
+      if (mach >= G7_TABLE[G7_TABLE.length - 1][0]) return G7_TABLE[G7_TABLE.length - 1][1];
+      let low = 0, high = G7_TABLE.length - 1;
+      while (low <= high) {
+        let mid = (low + high) >> 1;
+        if (G7_TABLE[mid][0] < mach) low = mid + 1;
+        else high = mid - 1;
+      }
+      let [m0, cd0] = G7_TABLE[low - 1];
+      let [m1, cd1] = G7_TABLE[low];
+      return cd0 + ((mach - m0) / (m1 - m0)) * (cd1 - cd0);
+    }
+
+    function gaussianRandom(mean = 0, stdDev = 1) {
+      let u = 1 - Math.random();
+      let v = Math.random();
+      let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      return z * stdDev + mean;
+    }
+
+    // =========================================================================
+    // 2. COMPLETE 25-BULLET LIBRARY & EQUIPMENT CATALOG
+    // =========================================================================
+    const BULLETS = [
+      { id: 'sierra_224_77', name: '.224 Sierra 77gr SMK', cost: 0, roundCost: 1.50, bc: 0.190, mv: 2750, dia: 0.224, wt: 77.0, len: 0.990, twist: 8.0, baseGr: 24.0, sweetJump: 0.020 },
+      { id: 'hornady_224_75', name: '.224 Hornady 75gr ELD-M', cost: 120, roundCost: 1.60, bc: 0.212, mv: 2810, dia: 0.224, wt: 75.0, len: 1.110, twist: 8.0, baseGr: 24.2, sweetJump: 0.025 },
+      { id: 'berger_224_805', name: '.224 Berger 80.5gr Fullbore', cost: 220, roundCost: 1.85, bc: 0.226, mv: 2780, dia: 0.224, wt: 80.5, len: 1.095, twist: 7.5, baseGr: 24.5, sweetJump: 0.015 },
+      { id: 'hornady_224_88', name: '.224 Hornady 88gr ELD-M', cost: 320, roundCost: 1.95, bc: 0.274, mv: 2680, dia: 0.224, wt: 88.0, len: 1.240, twist: 7.0, baseGr: 24.8, sweetJump: 0.030 },
+
+      { id: 'hornady_243_105', name: '.243 Hornady 105gr BTHP', cost: 420, roundCost: 2.10, bc: 0.265, mv: 2980, dia: 0.243, wt: 105.0, len: 1.230, twist: 8.0, baseGr: 41.5, sweetJump: 0.025 },
+      { id: 'sierra_243_107', name: '.243 Sierra 107gr SMK', cost: 500, roundCost: 2.25, bc: 0.262, mv: 2960, dia: 0.243, wt: 107.0, len: 1.230, twist: 8.0, baseGr: 41.2, sweetJump: 0.020 },
+      { id: 'hornady_243_108', name: '.243 Hornady 108gr ELD-M', cost: 600, roundCost: 2.30, bc: 0.275, mv: 2950, dia: 0.243, wt: 108.0, len: 1.265, twist: 7.5, baseGr: 41.0, sweetJump: 0.030 },
+      { id: 'hornady_243_109', name: '.243 Hornady 109gr ELD-M', cost: 720, roundCost: 2.45, bc: 0.295, mv: 2930, dia: 0.243, wt: 109.0, len: 1.315, twist: 7.5, baseGr: 40.8, sweetJump: 0.025 },
+      { id: 'berger_243_120', name: '.243 Berger 120gr LR Hybrid', cost: 880, roundCost: 2.75, bc: 0.328, mv: 2860, dia: 0.243, wt: 120.0, len: 1.383, twist: 7.0, baseGr: 40.2, sweetJump: 0.020 },
+
+      { id: 'hornady_257_134', name: '.257 Hornady 134gr ELD-M', cost: 1020, roundCost: 2.90, bc: 0.325, mv: 2880, dia: 0.257, wt: 134.0, len: 1.410, twist: 7.5, baseGr: 42.5, sweetJump: 0.030 },
+      { id: 'berger_257_135', name: '.257 Berger 135gr LR Hybrid', cost: 1180, roundCost: 3.10, bc: 0.334, mv: 2870, dia: 0.257, wt: 135.0, len: 1.416, twist: 7.5, baseGr: 42.2, sweetJump: 0.020 },
+
+      { id: 'hornady_264_140', name: '.264 Hornady 140gr ELD-M', cost: 1320, roundCost: 3.00, bc: 0.315, mv: 2715, dia: 0.264, wt: 140.0, len: 1.380, twist: 8.0, baseGr: 41.8, sweetJump: 0.030 },
+      { id: 'berger_264_140', name: '.264 Berger 140gr Hybrid', cost: 1450, roundCost: 3.25, bc: 0.311, mv: 2720, dia: 0.264, wt: 140.0, len: 1.405, twist: 8.0, baseGr: 42.0, sweetJump: 0.025 },
+      { id: 'berger_264_144', name: '.264 Berger 144gr LR Hybrid', cost: 1600, roundCost: 3.40, bc: 0.336, mv: 2705, dia: 0.264, wt: 144.0, len: 1.415, twist: 8.0, baseGr: 41.6, sweetJump: 0.020 },
+      { id: 'barnes_264_145', name: '.264 Barnes 145gr Match Burner', cost: 1700, roundCost: 3.30, bc: 0.341, mv: 2695, dia: 0.264, wt: 145.0, len: 1.466, twist: 7.5, baseGr: 41.5, sweetJump: 0.035 },
+      { id: 'hornady_264_147', name: '.264 Hornady 147gr ELD-M', cost: 1850, roundCost: 3.35, bc: 0.335, mv: 2690, dia: 0.264, wt: 147.0, len: 1.440, twist: 7.5, baseGr: 41.2, sweetJump: 0.030 },
+      { id: 'sierra_264_150', name: '.264 Sierra 150gr SMK', cost: 2000, roundCost: 3.60, bc: 0.356, mv: 2675, dia: 0.264, wt: 150.0, len: 1.510, twist: 7.5, baseGr: 41.0, sweetJump: 0.015 },
+      { id: 'hornady_264_153', name: '.264 Hornady 153gr A-Tip', cost: 2250, roundCost: 4.20, bc: 0.354, mv: 2660, dia: 0.264, wt: 153.0, len: 1.505, twist: 7.5, baseGr: 40.8, sweetJump: 0.025 },
+      { id: 'berger_264_1535', name: '.264 Berger 153.5gr LR Hybrid', cost: 2450, roundCost: 3.90, bc: 0.356, mv: 2665, dia: 0.264, wt: 153.5, len: 1.465, twist: 7.5, baseGr: 40.8, sweetJump: 0.020 },
+
+      { id: 'sierra_284_197', name: '7mm Sierra 197gr SMK', cost: 2750, roundCost: 4.10, bc: 0.385, mv: 2790, dia: 0.284, wt: 197.0, len: 1.650, twist: 8.0, baseGr: 66.0, sweetJump: 0.015 },
+      { id: 'berger_284_195', name: '7mm Berger 195gr EOL Hybrid', cost: 2950, roundCost: 4.30, bc: 0.387, mv: 2815, dia: 0.284, wt: 195.0, len: 1.655, twist: 8.0, baseGr: 66.5, sweetJump: 0.020 },
+
+      { id: 'berger_308_185', name: '.308 Berger 185gr Juggernaut', cost: 1100, roundCost: 2.85, bc: 0.283, mv: 2620, dia: 0.308, wt: 185.0, len: 1.355, twist: 10.0, baseGr: 44.0, sweetJump: 0.025 },
+      { id: 'berger_308_200', name: '.308 Berger 200.20x Hybrid', cost: 1550, roundCost: 3.30, bc: 0.328, mv: 2590, dia: 0.308, wt: 200.0, len: 1.510, twist: 10.0, baseGr: 43.2, sweetJump: 0.020 },
+      { id: 'berger_308_245', name: '.308 Berger 245gr LR Hybrid', cost: 3300, roundCost: 4.80, bc: 0.433, mv: 2710, dia: 0.308, wt: 245.0, len: 1.775, twist: 8.5, baseGr: 77.0, sweetJump: 0.020 },
+
+      { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, baseGr: 132.0, sweetJump: 0.030 }
+    ];
+
+    const OPTICS = [
+      { id: 'opt_1', name: '3-10x42 SFP Mil-Dot', cost: 0, minZoom: 3, maxZoom: 10, ffp: false, reticle: 'mildot', desc: 'Second Focal Plane (0.20 MRAD dots true ONLY at 10x).' },
+      { id: 'opt_2', name: '5-15x50 FFP Simple Tree', cost: 850, minZoom: 5, maxZoom: 15, ffp: true, reticle: 'simple_tree', desc: 'First Focal Plane with 0.5 MRAD hashes, numbered stadia & holdover tree.' },
+      { id: 'opt_3', name: '5-25x56 FFP Full Christmas Tree', cost: 2200, minZoom: 5, maxZoom: 25, ffp: true, reticle: 'full_tree', desc: 'First Focal Plane 0.2 MRAD grid reticle with numbered stadia & wind dots.' },
+      { id: 'opt_4', name: '6-36x56 FFP Extreme ELR Tree', cost: 3800, minZoom: 6, maxZoom: 36, ffp: true, reticle: 'elr_tree', desc: 'High-magnification 36x FFP ELR reticle with extended 16 MRAD tree.' }
+    ];
+
+    const WIND_GEAR = [
+      { id: 'wind_1', name: 'No Wind Meter (Naked Eye)', cost: 0, desc: 'Read bullet splash dust & mirage only.' },
+      { id: 'wind_3', name: 'Kestrel 5700 Handheld Meter', cost: 1100, desc: 'Unlocks live collapsible Kestrel weather station HUD.' }
+    ];
+
+    const BRASS_POWDER = [
+      { id: 'ammo_1', name: 'Standard Bulk Cases & Powder', cost: 0, mvBonus: 0, mvSD: 18, bcSDPct: 0.015, costMult: 1.0, desc: 'High MV spread (SD 18 fps) & 1.5% BC variance.' },
+      { id: 'ammo_2', name: 'Match Brass & Temp-Stable Powder', cost: 600, mvBonus: 25, mvSD: 6, bcSDPct: 0.006, costMult: 1.3, desc: 'Tight velocity spread (SD 6 fps) & consistent ignition.' },
+      { id: 'ammo_3', name: '80,000 PSI Steel-Alloy Hybrid Case', cost: 1800, mvBonus: 185, mvSD: 4, bcSDPct: 0.004, costMult: 1.8, desc: 'High-pressure case architecture (+185 fps boost, SD 4 fps).' }
+    ];
+
+    const BARRELS = [
+      { id: 'brl_1', name: 'Factory Rack-Grade Barrel', cost: 0, groupMoa: 1.10, desc: '1.10 MOA mechanical cone of dispersion.' },
+      { id: 'brl_2', name: 'Custom Cut-Rifled Match Barrel', cost: 750, groupMoa: 0.55, desc: '0.55 MOA precision hand-lapped barrel.' },
+      { id: 'brl_3', name: 'Blueprinted Action + Heavy MTU', cost: 1900, groupMoa: 0.28, desc: '0.28 MOA benchrest-grade action & barrel.' }
+    ];
+
+    const CHASSIS = [
+      { id: 'chs_1', name: 'Lightweight Polymer Stock', cost: 0, groupBonus: 0.00, recoilMult: 1.0, swayMult: 1.0, desc: 'Standard weight; higher recoil jump & sway.' },
+      { id: 'chs_2', name: 'Aluminum V-Block Chassis', cost: 550, groupBonus: -0.04, recoilMult: 0.72, swayMult: 0.82, desc: 'Better tracking (-28% recoil jump, -18% sway).' },
+      { id: 'chs_3', name: 'Heavy PRS Competition Chassis', cost: 1450, groupBonus: -0.08, recoilMult: 0.45, swayMult: 0.65, desc: 'Heavy steel-weighted chassis (-55% recoil, -35% sway).' }
+    ];
+
+    // =========================================================================
+    // 3. PLAYER STATE, CUSTOM HANDLOAD RECIPE & CHRONOGRAPH HISTORY
+    // =========================================================================
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v1';
+    const DEFAULT_SAVE = {
+      cash: 250.00,
+      unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
+      eq: {
+        bullet: 'sierra_224_77',
+        optic: 'opt_1',
+        wind: 'wind_1',
+        ammo: 'ammo_1',
+        barrel: 'brl_1',
+        chassis: 'chs_1'
+      },
+      handload: {
+        active: false,
+        brass: 'sorted',
+        powder: 'extruded',
+        chargePct: 100.0,
+        jumpIn: 0.020,
+        pointed: false
+      }
+    };
+
+    let state = {
+      cash: DEFAULT_SAVE.cash,
+      unlocked: [...DEFAULT_SAVE.unlocked],
+      eq: { ...DEFAULT_SAVE.eq },
+      handload: { ...DEFAULT_SAVE.handload },
+
+      targetType: 'ipsc_full',
+      distanceYd: 500,
+
+      azimuthDeg: 90,
+      latitudeDeg: 35.8,
+      tempF: 64,
+      pressInHg: 29.92,
+
+      baseWindMph: 8.5,
+      baseWindClock: 3.0,
+      curWindMph: 8.5,
+      curWindClock: 3.0,
+      windPhase: 0,
+
+      yawRad: 0.0,
+      pitchRad: 0.0,
+      adsMode: true,
+
+      turretElev: 0.0,
+      turretWind: 0.0,
+      zoom: 10,
+      bagElevMrad: 0.0,
+
+      oxygen: 100,
+      holdingBreath: false,
+      recoilPitch: 0,
+      recoilYaw: 0,
+      swayX: 0,
+      swayY: 0,
+
+      plateSwingVel: 0,
+      plateSwingAngle: 0,
+      muzzleFlashFrames: 0,
+      boltCycleTimer: -1,
+      brassEjected: false,
+
+      chronoLog: [],
+      benchOpen: false,
+      inFlight: false
+    };
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify({
+          cash: parseFloat(state.cash.toFixed(2)),
+          unlocked: state.unlocked,
+          eq: state.eq,
+          handload: state.handload
+        }));
+      } catch (e) {}
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.cash === 'number') state.cash = parsed.cash;
+        if (Array.isArray(parsed.unlocked)) state.unlocked = parsed.unlocked;
+        if (parsed.eq) {
+          state.eq = { ...DEFAULT_SAVE.eq, ...parsed.eq };
+          if (state.eq.wind === 'wind_2') state.eq.wind = 'wind_1';
+        }
+        if (parsed.handload) state.handload = { ...DEFAULT_SAVE.handload, ...parsed.handload };
+        const o = OPTICS.find(x => x.id === state.eq.optic) || OPTICS[0];
+        state.zoom = Math.min(o.maxZoom, Math.max(o.minZoom, state.zoom));
+        document.getElementById('hud-zoom').innerText = `${state.zoom.toFixed(1)}x`;
+        document.getElementById('disp-zoom-btn').innerText = `${state.zoom}x`;
+      } catch (e) {}
+    }
+
+    function resetProgress() {
+      if (!confirm("Reset all 3D simulator progress back to starter kit and $250.00?")) return;
+      try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+      state.cash = DEFAULT_SAVE.cash;
+      state.unlocked = [...DEFAULT_SAVE.unlocked];
+      state.eq = { ...DEFAULT_SAVE.eq };
+      state.handload = { ...DEFAULT_SAVE.handload };
+      state.chronoLog = [];
+      state.zoom = 10;
+      document.getElementById('hud-zoom').innerText = '10.0x';
+      document.getElementById('disp-zoom-btn').innerText = '10x';
+      saveProgress();
+      updateChronoHUD();
+      updateTopUI();
+      renderArmory();
+      updateRifleAppearance();
+      setFeedback("PROGRESS RESET TO STARTER KIT", "#e5a93b");
+    }
+
+    // Compute Effective Ballistic Parameters for Active Ammo (Factory vs. Custom Handload)
+    function computeActiveAmmoSpecs() {
+      const b = BULLETS.find(x => x.id === state.eq.bullet);
+      const a = BRASS_POWDER.find(x => x.id === state.eq.ammo);
+
+      if (!state.handload.active) {
+        return {
+          isHandload: false,
+          label: `${b.name}`,
+          mv: b.mv + a.mvBonus,
+          mvSD: a.mvSD,
+          bc: b.bc,
+          bcSDPct: a.bcSDPct,
+          groupBonusMoa: 0,
+          roundCost: parseFloat((b.roundCost * a.costMult).toFixed(2))
+        };
+      }
+
+      const hl = state.handload;
+      const chargeDeltaPct = (hl.chargePct - 100.0); // e.g., -8 to +6
+      const powderBonusFps = hl.powder === 'ball' ? 65 : 0;
+      const tempShiftFps = hl.powder === 'ball' ? (state.tempF - 64) * 1.1 : (state.tempF - 64) * 0.15;
+      const mv = Math.round(b.mv + powderBonusFps + (chargeDeltaPct * 26) + tempShiftFps);
+
+      // Chamber Pressure PSI
+      const basePsi = 54000 + (hl.powder === 'ball' ? 2200 : 0);
+      const psi = Math.round(basePsi + chargeDeltaPct * 1450 + Math.max(0, (0.015 - hl.jumpIn) * 140000));
+
+      // Brass/Primer Base SD
+      let baseSD = hl.brass === 'lapua' ? 4.8 : (hl.brass === 'sorted' ? 8.2 : 16.5);
+      // OCW Velocity Nodes at 97.4% and 102.2% charge weight
+      const distNode1 = Math.abs(hl.chargePct - 97.4);
+      const distNode2 = Math.abs(hl.chargePct - 102.2);
+      const minNodeDist = Math.min(distNode1, distNode2);
+      let nodeFactor = 1.0;
+      if (minNodeDist < 0.7) {
+        nodeFactor = 0.58 + (minNodeDist / 0.7) * 0.42; // Up to 42% SD reduction on node
+      }
+      // Over-pressure penalty above 62,000 PSI
+      if (psi > 62000) {
+        nodeFactor += (psi - 62000) / 3500;
+      }
+      const mvSD = parseFloat(Math.max(2.4, baseSD * nodeFactor).toFixed(1));
+
+      // Seating depth jump sweet spot
+      const jumpError = Math.abs(hl.jumpIn - b.sweetJump);
+      const groupBonusMoa = parseFloat((-0.14 + Math.min(0.45, jumpError * 7.5)).toFixed(2));
+
+      // Meplat pointing & brass BC consistency
+      const bc = parseFloat((b.bc * (hl.pointed ? 1.022 : 1.0)).toFixed(3));
+      let bcSDPct = hl.brass === 'lapua' ? 0.005 : (hl.brass === 'sorted' ? 0.009 : 0.015);
+      if (hl.pointed) bcSDPct *= 0.65;
+
+      // Component cost is lower than factory match ammo
+      const brassCost = hl.brass === 'lapua' ? 0.65 : (hl.brass === 'sorted' ? 0.35 : 0.15);
+      const roundCost = parseFloat((b.roundCost * 0.48 + brassCost + (hl.pointed ? 0.08 : 0)).toFixed(2));
+
+      return {
+        isHandload: true,
+        label: `${b.name} [HANDLOAD]`,
+        mv,
+        mvSD,
+        bc,
+        bcSDPct,
+        groupBonusMoa,
+        roundCost,
+        psi,
+        minNodeDist
+      };
+    }
+
+    function getEquipped() {
+      return {
+        b: BULLETS.find(x => x.id === state.eq.bullet),
+        o: OPTICS.find(x => x.id === state.eq.optic),
+        w: WIND_GEAR.find(x => x.id === state.eq.wind) || WIND_GEAR[0],
+        a: BRASS_POWDER.find(x => x.id === state.eq.ammo),
+        brl: BARRELS.find(x => x.id === state.eq.barrel),
+        chs: CHASSIS.find(x => x.id === state.eq.chassis),
+        ammoSpecs: computeActiveAmmoSpecs()
+      };
+    }
+
+    function updateChronoHUD() {
+      const log = state.chronoLog;
+      document.getElementById('chr-n').innerText = log.length;
+      if (log.length === 0) {
+        document.getElementById('chr-last').innerText = '--- fps';
+        document.getElementById('chr-es').innerText = '--';
+        document.getElementById('chr-sd').innerText = '--';
+        return;
+      }
+      const last = log[log.length - 1];
+      document.getElementById('chr-last').innerText = `${last.toFixed(0)} fps`;
+      if (log.length >= 2) {
+        const min = Math.min(...log);
+        const max = Math.max(...log);
+        const es = max - min;
+        const mean = log.reduce((s, v) => s + v, 0) / log.length;
+        const variance = log.reduce((s, v) => s + ((v - mean) ** 2), 0) / (log.length - 1);
+        const sd = Math.sqrt(variance);
+        document.getElementById('chr-es').innerText = `${es.toFixed(0)}`;
+        document.getElementById('chr-sd').innerText = `${sd.toFixed(1)}`;
+      } else {
+        document.getElementById('chr-es').innerText = '0';
+        document.getElementById('chr-sd').innerText = '0.0';
+      }
+    }
+
+    // =========================================================================
+    // 4. THREE.JS 3D RANGE SCENE & RIFLE ANIMATIONS
+    // =========================================================================
+    const YD_TO_M = 0.9144;
+    const IN_TO_M = 0.0254;
+    const SCOPE_BASE_FOV_DEG = 19.5;
+
+    const threeCanvas = document.getElementById('threeCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x88b4dc);
+    scene.fog = new THREE.FogExp2(0x9ec0de, 0.00032);
+
+    const mainCamera = new THREE.PerspectiveCamera(42, 16 / 10, 0.08, 2500);
+    const scopeCamera = new THREE.PerspectiveCamera(2.0, 1, 5.0, 2500);
+
+    const hemiLight = new THREE.HemisphereLight(0xdceeff, 0x4d5d38, 0.85);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.15);
+    sunLight.position.set(180, 320, 120);
+    scene.add(sunLight);
+
+    function createDustTexture() {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+      grad.addColorStop(0.0, 'rgba(235, 218, 185, 0.95)');
+      grad.addColorStop(0.35, 'rgba(212, 190, 152, 0.65)');
+      grad.addColorStop(0.7, 'rgba(185, 160, 122, 0.22)');
+      grad.addColorStop(1.0, 'rgba(185, 160, 122, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const DUST_TEXTURE = createDustTexture();
+
+    function createFlashTexture() {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+      grad.addColorStop(0.0, 'rgba(255, 255, 240, 1.0)');
+      grad.addColorStop(0.28, 'rgba(255, 195, 75, 0.92)');
+      grad.addColorStop(0.65, 'rgba(235, 95, 20, 0.35)');
+      grad.addColorStop(1.0, 'rgba(235, 95, 20, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const FLASH_TEXTURE = createFlashTexture();
+
+    function getTerrainHeight(x, z) {
+      const distM = Math.max(0, -z);
+      const valleyWalls = Math.pow(Math.abs(x) / 140, 2.1) * 28;
+      const rollingHills = Math.sin(x * 0.015) * Math.cos(z * 0.012) * 3.0;
+      const mountainBackdrop = distM > 1900 ? Math.pow((distM - 1900) / 300, 1.7) * 95 : 0;
+      const firingBenchFlat = distM < 30 ? 0 : 1;
+      return (valleyWalls + rollingHills + mountainBackdrop) * firingBenchFlat - 1.5;
+    }
+
+    const terrainGeo = new THREE.PlaneGeometry(1600, 2800, 110, 150);
+    terrainGeo.rotateX(-Math.PI / 2);
+    terrainGeo.translate(0, 0, -1350);
+
+    const posAttr = terrainGeo.attributes.position;
+    const colors = [];
+    const cGrass = new THREE.Color(0x56693d);
+    const cDirt = new THREE.Color(0x7c6548);
+    const cRock = new THREE.Color(0x69747c);
+
+    for (let i = 0; i < posAttr.count; i++) {
+      const vx = posAttr.getX(i);
+      const vz = posAttr.getZ(i);
+      const vy = getTerrainHeight(vx, vz);
+      posAttr.setY(i, vy);
+
+      const c = cGrass.clone();
+      if (vy > 35) c.lerp(cRock, Math.min(1, (vy - 35) / 50));
+      else if (Math.abs(vx) < 18 && vz < -250) c.lerp(cDirt, 0.35);
+      colors.push(c.r, c.g, c.b);
+    }
+    terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    terrainGeo.computeVertexNormals();
+
+    const terrainMesh = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.92,
+      metalness: 0.02
+    }));
+    scene.add(terrainMesh);
+
+    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.9 });
+    const treeLeafMat = new THREE.MeshStandardMaterial({ color: 0x2f4527, roughness: 0.85 });
+    for (let i = 0; i < 160; i++) {
+      const side = Math.random() > 0.5 ? 1 : -1;
+      const tx = side * (38 + Math.random() * 260);
+      const tz = -(80 + Math.random() * 1950);
+      const ty = getTerrainHeight(tx, tz);
+      const scale = 0.8 + Math.random() * 1.6;
+
+      const treeGroup = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25 * scale, 0.4 * scale, 2.5 * scale, 6), treeTrunkMat);
+      trunk.position.y = 1.25 * scale;
+      const foliage = new THREE.Mesh(new THREE.ConeGeometry(2.4 * scale, 7.5 * scale, 7), treeLeafMat);
+      foliage.position.y = 5.5 * scale;
+      treeGroup.add(trunk, foliage);
+      treeGroup.position.set(tx, ty, tz);
+      scene.add(treeGroup);
+    }
+
+    // 3D Rifle Rig
+    const rifleRig = new THREE.Group();
+    rifleRig.position.set(0, 0, 0);
+    scene.add(rifleRig);
+
+    const chassisMat = new THREE.MeshStandardMaterial({ color: 0x2b3036, roughness: 0.65, metalness: 0.3 });
+    const barrelMat = new THREE.MeshStandardMaterial({ color: 0x1c2026, roughness: 0.35, metalness: 0.8 });
+    const scopeMat = new THREE.MeshStandardMaterial({ color: 0x111418, roughness: 0.4, metalness: 0.7 });
+    const boltSteelMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.9 });
+
+    const barrelMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.019, 0.78, 16), barrelMat);
+    barrelMesh.rotation.x = Math.PI / 2;
+    barrelMesh.position.set(0, -0.045, -0.45);
+    rifleRig.add(barrelMesh);
+
+    const brakeMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.065, 16), barrelMat);
+    brakeMesh.rotation.x = Math.PI / 2;
+    brakeMesh.position.set(0, -0.045, -0.86);
+    rifleRig.add(brakeMesh);
+
+    const forendMesh = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.042, 0.48), chassisMat);
+    forendMesh.position.set(0, -0.072, -0.32);
+    rifleRig.add(forendMesh);
+
+    const receiverMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.16, 16), barrelMat);
+    receiverMesh.rotation.x = Math.PI / 2;
+    receiverMesh.position.set(0, -0.045, -0.05);
+    rifleRig.add(receiverMesh);
+
+    const boltPivot = new THREE.Group();
+    boltPivot.position.set(0, -0.045, -0.02);
+    const boltBody = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 12), boltSteelMat);
+    boltBody.rotation.x = Math.PI / 2;
+    boltBody.position.set(0, 0, -0.02);
+
+    const boltArm = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.004, 0.042, 8), boltSteelMat);
+    boltArm.rotation.z = Math.PI / 2;
+    boltArm.position.set(0.024, -0.005, 0.03);
+
+    const boltKnob = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 10), barrelMat);
+    boltKnob.position.set(0.046, -0.008, 0.03);
+
+    boltPivot.add(boltBody, boltArm, boltKnob);
+    rifleRig.add(boltPivot);
+
+    const muzzleFlashGroup = new THREE.Group();
+    muzzleFlashGroup.position.set(0, -0.045, -0.92);
+    muzzleFlashGroup.visible = false;
+
+    const flashMat = new THREE.SpriteMaterial({
+      map: FLASH_TEXTURE,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const centerFlash = new THREE.Sprite(flashMat);
+    centerFlash.scale.set(0.24, 0.24, 1);
+    const leftJet = new THREE.Sprite(flashMat);
+    leftJet.scale.set(0.32, 0.10, 1);
+    leftJet.position.set(-0.08, 0, 0.02);
+    const rightJet = new THREE.Sprite(flashMat);
+    rightJet.scale.set(0.32, 0.10, 1);
+    rightJet.position.set(0.08, 0, 0.02);
+    muzzleFlashGroup.add(centerFlash, leftJet, rightJet);
+    rifleRig.add(muzzleFlashGroup);
+
+    const scopeTubeMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.022, 0.36, 20), scopeMat);
+    scopeTubeMesh.rotation.x = Math.PI / 2;
+    scopeTubeMesh.position.set(0, 0.0, -0.24);
+    rifleRig.add(scopeTubeMesh);
+
+    const elevTurretMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.024, 16), scopeMat);
+    elevTurretMesh.position.set(0, 0.028, -0.16);
+    rifleRig.add(elevTurretMesh);
+
+    const windTurretMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.024, 16), scopeMat);
+    windTurretMesh.rotation.z = Math.PI / 2;
+    windTurretMesh.position.set(0.028, 0.0, -0.16);
+    rifleRig.add(windTurretMesh);
+
+    function updateRifleAppearance() {
+      if (state.eq.chassis === 'chs_3') chassisMat.color.setHex(0x3b4738);
+      else if (state.eq.chassis === 'chs_2') chassisMat.color.setHex(0x3a434e);
+      else chassisMat.color.setHex(0x23262b);
+    }
+
+    const activeBrass = [];
+    const activeMuzzleSmoke = [];
+    const brassMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.28, metalness: 0.88 });
+
+    function spawnEjectedBrass() {
+      const { b } = getEquipped();
+      const scaleMult = Math.max(0.85, b.dia / 0.264);
+      const caseGeo = new THREE.CylinderGeometry(0.0055 * scaleMult, 0.0062 * scaleMult, 0.052 * scaleMult, 10);
+      const mesh = new THREE.Mesh(caseGeo, brassMat);
+
+      const localPort = new THREE.Vector3(0.025, -0.035, -0.04);
+      const worldPort = localPort.applyMatrix4(rifleRig.matrixWorld);
+      mesh.position.copy(worldPort);
+
+      const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(rifleRig.quaternion);
+      const upVec = new THREE.Vector3(0, 1, 0).applyQuaternion(rifleRig.quaternion);
+      const backVec = new THREE.Vector3(0, 0, 1).applyQuaternion(rifleRig.quaternion);
+
+      const vel = new THREE.Vector3()
+        .addScaledVector(rightVec, 1.35 + Math.random() * 0.35)
+        .addScaledVector(upVec, 1.65 + Math.random() * 0.3)
+        .addScaledVector(backVec, 0.35 + Math.random() * 0.2);
+
+      scene.add(mesh);
+      activeBrass.push({
+        mesh,
+        vel,
+        spinX: 16 + Math.random() * 10,
+        spinZ: 12 + Math.random() * 8,
+        life: 1.5
+      });
+    }
+
+    function spawnMuzzleSmoke() {
+      const localMuzzle = new THREE.Vector3(0, -0.045, -0.92);
+      const worldMuzzle = localMuzzle.applyMatrix4(rifleRig.matrixWorld);
+
+      for (let i = 0; i < 4; i++) {
+        const mat = new THREE.SpriteMaterial({
+          map: DUST_TEXTURE,
+          color: 0xcbd5e1,
+          transparent: true,
+          opacity: 0.38,
+          depthWrite: false
+        });
+        const sp = new THREE.Sprite(mat);
+        sp.position.copy(worldMuzzle);
+        sp.position.z -= i * 0.08;
+        const sz = 0.14 + i * 0.05;
+        sp.scale.set(sz, sz, 1);
+        scene.add(sp);
+        activeMuzzleSmoke.push({
+          sp,
+          mat,
+          vy: 0.22 + Math.random() * 0.12,
+          vz: -0.35,
+          life: 1.0
+        });
+      }
+    }
+
+    // Dynamic 3D Target Assembly
+    const steelFaceMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.38,
+      metalness: 0.25,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    });
+    const steelRimMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.8 });
+    const bermMat = new THREE.MeshStandardMaterial({ color: 0x6e5539, roughness: 0.95 });
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x4f4334, roughness: 0.98 });
+
+    const rangeAssembly = new THREE.Group();
+    scene.add(rangeAssembly);
+
+    const padMesh = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.3, 3.5), padMat);
+    padMesh.position.set(0, -0.1, 0);
+    rangeAssembly.add(padMesh);
+
+    const BERM_LOCAL_Z = -9.5;
+    const BERM_BASE_Y = -0.4;
+    const BERM_HEIGHT = 4.6;
+    const BERM_RADIUS_X = 8.5 * 1.6;
+    const BERM_RADIUS_Z = 8.5 * 0.65;
+
+    const bermMesh = new THREE.Mesh(new THREE.ConeGeometry(8.5, BERM_HEIGHT, 16), bermMat);
+    bermMesh.position.set(0, BERM_BASE_Y + BERM_HEIGHT / 2, BERM_LOCAL_Z);
+    bermMesh.scale.set(1.6, 1.0, 0.65);
+    rangeAssembly.add(bermMesh);
+
+    const frameH = 1.75;
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, frameH, 8), postMat);
+    leftLeg.position.set(-0.55, frameH / 2, 0);
+    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, frameH, 8), postMat);
+    rightLeg.position.set(0.55, frameH / 2, 0);
+    const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.2, 8), postMat);
+    topBar.rotation.z = Math.PI / 2;
+    topBar.position.set(0, frameH, 0);
+    rangeAssembly.add(leftLeg, rightLeg, topBar);
+
+    const platePivot = new THREE.Group();
+    platePivot.position.set(0, frameH, 0.08);
+    rangeAssembly.add(platePivot);
+
+    const plateHolder = new THREE.Group();
+    plateHolder.position.set(0, -0.70, 0);
+    platePivot.add(plateHolder);
+
+    let activeTargetSpec = {
+      worldCenter: new THREE.Vector3(0, 1.05, -500 * YD_TO_M),
+      groundY: -1.5,
+      standZ: -500 * YD_TO_M,
+      shape: 'rect',
+      halfW: 9 * IN_TO_M,
+      halfH: 15 * IN_TO_M,
+      radius: 0.2
+    };
+
+    const activeDecals = [];
+
+    function clearImpactDecals() {
+      while (activeDecals.length > 0) {
+        const d = activeDecals.pop();
+        if (d.parent) d.parent.remove(d);
+        else scene.remove(d);
+      }
+    }
+
+    function rebuildRangeTarget() {
+      while (plateHolder.children.length > 0) {
+        plateHolder.remove(plateHolder.children[0]);
+      }
+      clearImpactDecals();
+      state.plateSwingVel = 0;
+      state.plateSwingAngle = 0;
+      platePivot.rotation.x = 0;
+
+      const zPos = -state.distanceYd * YD_TO_M;
+      const groundY = getTerrainHeight(0, zPos);
+      rangeAssembly.position.set(0, groundY, zPos);
+
+      const centerHeightY = 1.05;
+      activeTargetSpec.worldCenter.set(0, groundY + centerHeightY, zPos + 0.08);
+      activeTargetSpec.groundY = groundY;
+      activeTargetSpec.standZ = zPos;
+
+      const chainMat = new THREE.MeshStandardMaterial({ color: 0x1a202c });
+      const leftChain = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.65, 6), chainMat);
+      leftChain.position.set(-0.18, 0.38, -0.04);
+      const rightChain = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.65, 6), chainMat);
+      rightChain.position.set(0.18, 0.38, -0.04);
+      plateHolder.add(leftChain, rightChain);
+
+      if (state.targetType === 'ipsc_full' || state.targetType === 'ipsc_23') {
+        const s = state.targetType === 'ipsc_23' ? (2 / 3) : 1.0;
+        const wM = 18 * s * IN_TO_M;
+        const hM = 30 * s * IN_TO_M;
+
+        const torsoH = hM * 0.84;
+        const torsoY = -hM * 0.08;
+        const torsoBack = new THREE.Mesh(new THREE.BoxGeometry(wM + 0.03, torsoH + 0.03, 0.02), steelRimMat);
+        torsoBack.position.set(0, torsoY, -0.05);
+        const torsoFace = new THREE.Mesh(new THREE.BoxGeometry(wM, torsoH, 0.025), steelFaceMat);
+        torsoFace.position.set(0, torsoY, 0.02);
+
+        const headW = wM * 0.50;
+        const headH = hM * 0.16;
+        const headY = torsoY + (torsoH / 2) + (headH / 2);
+        const headBack = new THREE.Mesh(new THREE.BoxGeometry(headW + 0.03, headH + 0.03, 0.02), steelRimMat);
+        headBack.position.set(0, headY, -0.05);
+        const headFace = new THREE.Mesh(new THREE.BoxGeometry(headW, headH, 0.025), steelFaceMat);
+        headFace.position.set(0, headY, 0.02);
+
+        plateHolder.add(torsoBack, torsoFace, headBack, headFace);
+
+        activeTargetSpec.shape = 'rect';
+        activeTargetSpec.halfW = wM / 2;
+        activeTargetSpec.halfH = hM / 2;
+      } else {
+        const moa = state.targetType === 'gong_10moa' ? 1.0 : 1.5;
+        const diaM = (moa * 1.047 * (state.distanceYd / 100)) * IN_TO_M;
+        const radM = diaM / 2;
+
+        const rimDisc = new THREE.Mesh(new THREE.CircleGeometry(radM + 0.025, 32), steelRimMat);
+        rimDisc.position.set(0, 0, -0.04);
+        const faceDisc = new THREE.Mesh(new THREE.CircleGeometry(radM, 32), steelFaceMat);
+        faceDisc.position.set(0, 0, 0.03);
+
+        plateHolder.add(rimDisc, faceDisc);
+
+        activeTargetSpec.shape = 'circle';
+        activeTargetSpec.radius = radM;
+      }
+
+      const dy = activeTargetSpec.worldCenter.y;
+      const dz = activeTargetSpec.worldCenter.z;
+      state.yawRad = 0;
+      state.pitchRad = Math.atan2(dy, -dz);
+    }
+
+    function getBermSurfaceY(wx, wz) {
+      const localZ = wz - activeTargetSpec.standZ - BERM_LOCAL_Z;
+      const normDist = Math.sqrt((wx / BERM_RADIUS_X) ** 2 + (localZ / BERM_RADIUS_Z) ** 2);
+      if (normDist >= 1.0) return -9999;
+      const localConeY = BERM_BASE_Y + BERM_HEIGHT * (1.0 - normDist);
+      return activeTargetSpec.groundY + localConeY;
+    }
+
+    const activeTraces = [];
+    const activeSplashes = [];
+
+    function spawn3DTrace(pointsWorld) {
+      if (pointsWorld.length < 3) return;
+
+      const helixPts1 = [];
+      const helixPts2 = [];
+      const corePts = [];
+
+      const totalPts = pointsWorld.length;
+      const vortexRadius = 0.018;
+      const turnsPerMeter = 0.45;
+      const upRef = new THREE.Vector3(0, 1, 0);
+
+      for (let i = 0; i < totalPts; i++) {
+        const p = pointsWorld[i];
+        const pPrev = pointsWorld[Math.max(0, i - 1)];
+        const pNext = pointsWorld[Math.min(totalPts - 1, i + 1)];
+
+        const tangent = new THREE.Vector3().subVectors(pNext, pPrev).normalize();
+        const right = new THREE.Vector3().crossVectors(tangent, upRef).normalize();
+        const normal = new THREE.Vector3().crossVectors(right, tangent).normalize();
+
+        const distM = Math.abs(p.z);
+        const theta = distM * turnsPerMeter * Math.PI * 2;
+        const endTaper = (i === totalPts - 1) ? 0.0 : 1.0;
+        const r = vortexRadius * (1.0 + (distM / 1200) * 0.6) * endTaper;
+
+        const offset1 = new THREE.Vector3()
+          .addScaledVector(right, Math.cos(theta) * r)
+          .addScaledVector(normal, Math.sin(theta) * r);
+
+        const offset2 = new THREE.Vector3()
+          .addScaledVector(right, Math.cos(theta + Math.PI) * r)
+          .addScaledVector(normal, Math.sin(theta + Math.PI) * r);
+
+        helixPts1.push(p.clone().add(offset1));
+        helixPts2.push(p.clone().add(offset2));
+        corePts.push(p.clone());
+      }
+
+      const group = new THREE.Group();
+
+      const mat1 = new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.28 });
+      const mat2 = new THREE.LineBasicMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.22 });
+      const matCore = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.14 });
+
+      const line1 = new THREE.Line(new THREE.BufferGeometry().setFromPoints(helixPts1), mat1);
+      const line2 = new THREE.Line(new THREE.BufferGeometry().setFromPoints(helixPts2), mat2);
+      const lineCore = new THREE.Line(new THREE.BufferGeometry().setFromPoints(corePts), matCore);
+
+      group.add(line1, line2, lineCore);
+      scene.add(group);
+
+      activeTraces.push({
+        group,
+        mats: [mat1, mat2, matCore],
+        baseOpacities: [0.28, 0.22, 0.14],
+        life: 1.0
+      });
+    }
+
+    function spawn3DDirtSplash(posWorld, isBermHit = false) {
+      const distM = Math.max(200, Math.abs(posWorld.z));
+      const scaleUnit = Math.max(0.45, distM * 0.0009);
+
+      const splashGroup = new THREE.Group();
+      splashGroup.position.copy(posWorld);
+      if (isBermHit) splashGroup.position.z += 0.25;
+
+      const puffs = [];
+      const puffCount = 28;
+
+      for (let i = 0; i < puffCount; i++) {
+        const t = i / puffCount;
+        const spriteMat = new THREE.SpriteMaterial({
+          map: DUST_TEXTURE,
+          color: t < 0.35 ? 0xd8c39e : 0xeaddc5,
+          transparent: true,
+          opacity: 0.90 - t * 0.25,
+          depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+
+        const spreadAngle = (Math.random() - 0.5) * 0.42;
+        const launchSpeedY = scaleUnit * (4.5 + t * 11.5 + Math.random() * 2.5);
+        const launchSpeedX = Math.sin(spreadAngle) * launchSpeedY * 0.38;
+        const launchSpeedZ = isBermHit
+          ? scaleUnit * (1.5 + Math.random() * 2.5)
+          : (Math.random() - 0.5) * launchSpeedY * 0.25;
+
+        const initSize = scaleUnit * (0.68 + t * 0.88 + Math.random() * 0.4);
+        sprite.scale.set(initSize, initSize, 1);
+        sprite.position.set(
+          (Math.random() - 0.5) * scaleUnit * 0.25,
+          t * scaleUnit * 0.4,
+          (Math.random() - 0.5) * scaleUnit * 0.2
+        );
+
+        splashGroup.add(sprite);
+        puffs.push({
+          sprite,
+          mat: spriteMat,
+          vx: launchSpeedX,
+          vy: launchSpeedY,
+          vz: launchSpeedZ,
+          growRate: scaleUnit * (0.9 + t * 1.1),
+          drag: 0.89 - t * 0.03,
+          baseOpacity: 0.88 - t * 0.25
+        });
+      }
+
+      const clods = [];
+      const clodMat = new THREE.MeshBasicMaterial({ color: 0x3b2a1a });
+      for (let c = 0; c < 8; c++) {
+        const clod = new THREE.Mesh(new THREE.BoxGeometry(scaleUnit * 0.14, scaleUnit * 0.14, scaleUnit * 0.14), clodMat);
+        const ang = (Math.random() - 0.5) * 0.9;
+        const spd = scaleUnit * (4.0 + Math.random() * 4.5);
+        splashGroup.add(clod);
+        clods.push({
+          mesh: clod,
+          vx: Math.sin(ang) * spd,
+          vy: spd * (1.2 + Math.random() * 0.8),
+          vz: isBermHit ? spd * (0.4 + Math.random() * 0.6) : (Math.random() - 0.5) * spd * 0.5
+        });
+      }
+
+      scene.add(splashGroup);
+      activeSplashes.push({
+        group: splashGroup,
+        puffs,
+        clods,
+        life: 1.0
+      });
+    }
+
+    function spawn3DSteelSpark(posWorld) {
+      const distM = Math.max(200, Math.abs(posWorld.z));
+      const sparkR = Math.max(0.22, distM * 0.00045);
+      const sparkMat = new THREE.MeshBasicMaterial({
+        color: 0xffd166,
+        transparent: true,
+        opacity: 0.98
+      });
+      const sparkMesh = new THREE.Mesh(new THREE.SphereGeometry(sparkR, 10, 10), sparkMat);
+      sparkMesh.position.copy(posWorld);
+      sparkMesh.position.z += 0.08;
+      scene.add(sparkMesh);
+
+      activeSplashes.push({
+        group: sparkMesh,
+        coreMat: sparkMat,
+        life: 0.45,
+        isSpark: true
+      });
+    }
+
+    function spawn3DImpactDecal(posWorld, isHit, isBermHit = false) {
+      const distM = Math.max(200, Math.abs(posWorld.z));
+      const r = isHit ? 0.025 : Math.max(0.022, distM * 0.000032);
+      const geo = new THREE.CircleGeometry(r, 12);
+      const mat = new THREE.MeshBasicMaterial({
+        color: isHit ? 0x1a202c : 0x57412b,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4
+      });
+      const decal = new THREE.Mesh(geo, mat);
+
+      if (isHit) {
+        decal.position.set(
+          posWorld.x - activeTargetSpec.worldCenter.x,
+          posWorld.y - activeTargetSpec.worldCenter.y,
+          0.036
+        );
+        plateHolder.add(decal);
+      } else {
+        decal.position.copy(posWorld);
+        if (isBermHit) {
+          decal.rotation.x = -0.55;
+          decal.position.z += 0.08;
+          decal.position.y += 0.03;
+        } else {
+          decal.position.z += 0.04;
+        }
+        scene.add(decal);
+      }
+      activeDecals.push(decal);
+    }
+
+    // =========================================================================
+    // 5. 3D RELOADING BENCH SCENE (CUTAWAY CARTRIDGE & SINGLE-STAGE PRESS)
+    // =========================================================================
+    const benchCanvas = document.getElementById('benchCanvas');
+    const benchRenderer = new THREE.WebGLRenderer({ canvas: benchCanvas, antialias: true });
+    benchRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const benchScene = new THREE.Scene();
+    benchScene.background = new THREE.Color(0x11161d);
+
+    const benchCamera = new THREE.PerspectiveCamera(34, 4 / 3, 0.01, 10);
+    benchCamera.position.set(0.04, 0.05, 0.22);
+    benchCamera.lookAt(0, 0.035, 0);
+
+    const bHemi = new THREE.HemisphereLight(0xffffff, 0x334155, 1.05);
+    const bDir = new THREE.DirectionalLight(0xfff7ed, 1.25);
+    bDir.position.set(0.4, 0.8, 0.6);
+    benchScene.add(bHemi, bDir);
+
+    // Reloading Bench Table Surface
+    const tableMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 0.015, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0x3b2d22, roughness: 0.85 })
+    );
+    tableMesh.position.set(0, -0.0075, 0);
+    benchScene.add(tableMesh);
+
+    // Single-Stage Press Frame & Die Backdrop
+    const pressRedMat = new THREE.MeshStandardMaterial({ color: 0x9b2c2c, roughness: 0.45, metalness: 0.5 });
+    const pressSteelMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.9 });
+
+    const pressGroup = new THREE.Group();
+    pressGroup.position.set(-0.055, 0, -0.045);
+
+    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.018, 0.055), pressRedMat);
+    pressBase.position.y = 0.009;
+    const pressBackSpine = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.022), pressRedMat);
+    pressBackSpine.position.set(0, 0.075, -0.016);
+    const pressTopHead = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.022, 0.055), pressRedMat);
+    pressTopHead.position.set(0, 0.145, 0);
+    const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.045, 20), pressSteelMat);
+    seatingDie.position.set(0, 0.155, 0.01);
+    const pressRam = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 16), pressSteelMat);
+    pressRam.position.set(0, 0.032, 0.01);
+    const pressHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.13, 10), pressSteelMat);
+    pressHandle.rotation.z = -0.45;
+    pressHandle.position.set(0.035, 0.06, -0.015);
+
+    pressGroup.add(pressBase, pressBackSpine, pressTopHead, seatingDie, pressRam, pressHandle);
+    benchScene.add(pressGroup);
+
+    // Interactive 3D Cartridge Assembly (Front & Center on Shellholder Pedestal)
+    const cartridgeHolder = new THREE.Group();
+    cartridgeHolder.position.set(0.02, 0.008, 0.02);
+    benchScene.add(cartridgeHolder);
+
+    const shellPedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.026, 0.008, 24),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 })
+    );
+    shellPedestal.position.y = -0.004;
+    cartridgeHolder.add(shellPedestal);
+
+    // Translucent Cutaway Brass Case + Internal Powder Column + Copper Jacketed Projectile
+    const bBrassMat = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      roughness: 0.25,
+      metalness: 0.85,
+      transparent: true,
+      opacity: 0.68
+    });
+    const bPrimerMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.95 });
+    const bPowderMat = new THREE.MeshStandardMaterial({ color: 0x1e242b, roughness: 0.95 });
+    const bCopperMat = new THREE.MeshStandardMaterial({ color: 0xc87533, roughness: 0.28, metalness: 0.88 });
+    const bPolymerTipMat = new THREE.MeshStandardMaterial({ color: 0xe53e3e, roughness: 0.35 });
+
+    const caseBodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0068, 0.042, 24), bBrassMat);
+    const caseShoulderMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0065, 0.007, 24), bBrassMat);
+    const caseNeckMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, 0.008, 24), bBrassMat);
+    const primerDiscMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0028, 0.0028, 0.002, 16), bPrimerMat);
+    const powderColMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0056, 0.0058, 0.036, 20), bPowderMat);
+
+    const projectileGroup = new THREE.Group();
+    const bulletShankMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0038, 0.0038, 0.018, 24), bCopperMat);
+    const bulletOgiveMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0038, 0.018, 24), bCopperMat);
+    const bulletTipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0014, 0.006, 16), bPolymerTipMat);
+    projectileGroup.add(bulletShankMesh, bulletOgiveMesh, bulletTipMesh);
+
+    cartridgeHolder.add(caseBodyMesh, caseShoulderMesh, caseNeckMesh, primerDiscMesh, powderColMesh, projectileGroup);
+
+    function update3DCartridgePreview() {
+      const { b } = getEquipped();
+      const hl = state.handload;
+
+      // Scale cartridge dimensions proportionally to caliber & bullet length
+      const rBody = Math.max(0.0048, (b.dia * IN_TO_M) * 0.82);
+      const rBullet = (b.dia * IN_TO_M) * 0.5;
+      const caseLenM = b.dia <= 0.224 ? 0.044 : (b.dia >= 0.375 ? 0.072 : 0.052);
+      const bulletLenM = b.len * IN_TO_M;
+
+      // Brass color reflects prep quality
+      if (hl.brass === 'lapua') bBrassMat.color.setHex(0xe2b93b);
+      else if (hl.brass === 'sorted') bBrassMat.color.setHex(0xcfa332);
+      else bBrassMat.color.setHex(0x9c7a28);
+
+      bPrimerMat.color.setHex(hl.brass === 'range' ? 0xd4af37 : 0xf1f5f9);
+      bPowderMat.color.setHex(hl.powder === 'ball' ? 0x2d3748 : 0x14181d);
+
+      // Update Case Meshes
+      const bodyH = caseLenM * 0.74;
+      const shH = caseLenM * 0.12;
+      const neckH = caseLenM * 0.14;
+
+      caseBodyMesh.scale.set(rBody / 0.0065, bodyH / 0.042, rBody / 0.0065);
+      caseBodyMesh.position.y = bodyH / 2;
+
+      caseShoulderMesh.scale.set(rBody / 0.0065, shH / 0.007, rBody / 0.0065);
+      caseShoulderMesh.position.y = bodyH + shH / 2;
+
+      caseNeckMesh.scale.set((rBullet * 1.08) / 0.0042, neckH / 0.008, (rBullet * 1.08) / 0.0042);
+      caseNeckMesh.position.y = bodyH + shH + neckH / 2;
+
+      primerDiscMesh.position.y = 0.001;
+
+      // Update Internal Powder Column Height based on Charge %
+      const fillRatio = Math.min(1.04, Math.max(0.75, (hl.chargePct - 8) / 100));
+      const pHeight = (bodyH + shH * 0.7) * fillRatio;
+      powderColMesh.scale.set((rBody * 0.88) / 0.0056, pHeight / 0.036, (rBody * 0.88) / 0.0056);
+      powderColMesh.position.y = 0.003 + pHeight / 2;
+
+      // Update Projectile & Seating Depth (Longer jump = seated deeper inside case)
+      const shankH = bulletLenM * 0.48;
+      const ogiveH = bulletLenM * 0.52;
+      bulletShankMesh.scale.set(rBullet / 0.0038, shankH / 0.018, rBullet / 0.0038);
+      bulletShankMesh.position.y = shankH / 2;
+
+      bulletOgiveMesh.scale.set(rBullet / 0.0038, ogiveH / 0.018, rBullet / 0.0038);
+      bulletOgiveMesh.position.y = shankH + ogiveH / 2;
+
+      bulletTipMesh.visible = hl.pointed;
+      bulletTipMesh.position.y = shankH + ogiveH * 0.92;
+
+      // Seat bullet into case neck; reducing jump pushes bullet outward (longer COAL)
+      const jumpOffsetM = (0.040 - hl.jumpIn) * IN_TO_M;
+      projectileGroup.position.y = caseLenM - shankH * 0.85 + jumpOffsetM;
+    }
+
+    let benchYaw = 0.35;
+    let benchDragging = false, benchLastX = 0;
+    benchCanvas.addEventListener('pointerdown', e => { benchDragging = true; benchLastX = e.clientX; });
+    window.addEventListener('pointermove', e => {
+      if (!benchDragging) return;
+      benchYaw += (e.clientX - benchLastX) * 0.012;
+      benchLastX = e.clientX;
+    });
+    window.addEventListener('pointerup', () => benchDragging = false);
+
+    function animateBench() {
+      if (!state.benchOpen) return;
+      const wrap = benchCanvas.parentElement;
+      const w = wrap.clientWidth;
+      const h = wrap.clientHeight;
+      if (benchCanvas.width !== w || benchCanvas.height !== h) {
+        benchRenderer.setSize(w, h, false);
+        benchCamera.aspect = w / h;
+        benchCamera.updateProjectionMatrix();
+      }
+      if (!benchDragging) benchYaw += 0.006;
+      cartridgeHolder.rotation.y = benchYaw;
+      benchRenderer.render(benchScene, benchCamera);
+      requestAnimationFrame(animateBench);
+    }
+
+    // Bench UI Controls & Sync
+    function openBench() {
+      state.benchOpen = true;
+      document.getElementById('modal-bench').classList.add('open');
+      document.getElementById('b-sel-brass').value = state.handload.brass;
+      document.getElementById('b-sel-powder').value = state.handload.powder;
+      document.getElementById('b-slider-charge').value = state.handload.chargePct;
+      document.getElementById('b-slider-jump').value = state.handload.jumpIn;
+      document.getElementById('b-chk-point').checked = state.handload.pointed;
+      updateBenchCalculations();
+      requestAnimationFrame(animateBench);
+    }
+
+    function closeBench() {
+      state.benchOpen = false;
+      document.getElementById('modal-bench').classList.remove('open');
+    }
+
+    function setBenchChargePct(val) {
+      state.handload.chargePct = parseFloat(val);
+      updateBenchCalculations();
+    }
+
+    function stepBenchCharge(deltaGr) {
+      const { b } = getEquipped();
+      const stepPct = (deltaGr / b.baseGr) * 100;
+      state.handload.chargePct = Math.min(106, Math.max(92, parseFloat((state.handload.chargePct + stepPct).toFixed(1))));
+      document.getElementById('b-slider-charge').value = state.handload.chargePct;
+      updateBenchCalculations();
+    }
+
+    function setBenchJump(val) {
+      state.handload.jumpIn = parseFloat(val);
+      updateBenchCalculations();
+    }
+
+    function stepBenchJump(delta) {
+      state.handload.jumpIn = Math.min(0.080, Math.max(0.005, parseFloat((state.handload.jumpIn + delta).toFixed(3))));
+      document.getElementById('b-slider-jump').value = state.handload.jumpIn;
+      updateBenchCalculations();
+    }
+
+    function updateBenchCalculations() {
+      state.handload.brass = document.getElementById('b-sel-brass').value;
+      state.handload.powder = document.getElementById('b-sel-powder').value;
+      state.handload.pointed = document.getElementById('b-chk-point').checked;
+
+      const { b } = getEquipped();
+      const prevActive = state.handload.active;
+      state.handload.active = true;
+      const specs = computeActiveAmmoSpecs();
+      state.handload.active = prevActive;
+
+      const chargeGr = (b.baseGr * (state.handload.chargePct / 100)).toFixed(1);
+      document.getElementById('b3d-bullet').innerText = b.name;
+      document.getElementById('b3d-fill').innerText = `${(state.handload.chargePct - 6).toFixed(1)}%`;
+      document.getElementById('b3d-jump').innerText = `${state.handload.jumpIn.toFixed(3)}"`;
+
+      document.getElementById('b-charge-pct').innerText = `${state.handload.chargePct.toFixed(1)}%`;
+      document.getElementById('b-disp-charge').innerText = `${chargeGr} gr`;
+      document.getElementById('b-disp-jump').innerText = `${state.handload.jumpIn.toFixed(3)}"`;
+
+      document.getElementById('b-stat-mv').innerText = `${specs.mv} fps`;
+      document.getElementById('b-stat-sd').innerText = `${specs.mvSD.toFixed(1)} fps`;
+      document.getElementById('b-stat-bc').innerText = `${specs.bc.toFixed(3)}`;
+      document.getElementById('b-stat-moa').innerText = `${specs.groupBonusMoa >= 0 ? '+' : ''}${specs.groupBonusMoa.toFixed(2)} MOA`;
+
+      // Pressure Gauge
+      document.getElementById('bench-psi-lbl').innerText = `${specs.psi.toLocaleString()} PSI`;
+      const pctBar = Math.min(100, Math.max(20, ((specs.psi - 42000) / 26000) * 100));
+      const barEl = document.getElementById('bench-psi-bar');
+      barEl.style.width = `${pctBar}%`;
+
+      const noteEl = document.getElementById('bench-node-note');
+      if (specs.psi > 62000) {
+        barEl.style.background = '#e53e3e';
+        document.getElementById('bench-psi-lbl').style.color = '#fc8181';
+        noteEl.innerText = "WARNING: Over SAAMI max pressure! High SD & flattened primers.";
+        noteEl.style.color = '#fc8181';
+      } else if (specs.minNodeDist < 0.7) {
+        barEl.style.background = '#38a169';
+        document.getElementById('bench-psi-lbl').style.color = '#68d391';
+        noteEl.innerText = "OCW VELOCITY NODE FOUND! Harmonic barrel exit yields tight SD.";
+        noteEl.style.color = '#68d391';
+      } else {
+        barEl.style.background = '#e5a93b';
+        document.getElementById('bench-psi-lbl').style.color = '#e5a93b';
+        noteEl.innerText = "Safe pressure. Adjust charge weight to find a low-SD node.";
+        noteEl.style.color = 'var(--muted)';
+      }
+
+      update3DCartridgePreview();
+    }
+
+    function equipCustomHandload() {
+      state.handload.active = true;
+      state.chronoLog = [];
+      updateChronoHUD();
+      saveProgress();
+      updateTopUI();
+      closeBench();
+      setFeedback("EQUIPPED CUSTOM HANDLOAD — CHRONOGRAPH RESET", "#68d391");
+    }
+
+    function useFactoryAmmo() {
+      state.handload.active = false;
+      state.chronoLog = [];
+      updateChronoHUD();
+      saveProgress();
+      updateTopUI();
+      closeBench();
+      setFeedback("SWITCHED TO FACTORY AMMUNITION", "#e2e8f0");
+    }
+
+    // =========================================================================
+    // 6. 3D RK4 + SPIN DRIFT + CORIOLIS + IN-FLIGHT TRANSONIC PERTURBATION
+    // =========================================================================
+    function simulate3DTrajectory(params) {
+      const {
+        launchYaw, launchPitch, mvFps, bcG7, wtGr, diaIn, lenIn, twistIn,
+        tempF, pressInHg, windMph, windClock, latDeg, azDeg, maxDistM, recordTrace
+      } = params;
+
+      const g = 9.80665;
+      const v0 = mvFps * 0.3048;
+      const sightH_m = 1.75 * IN_TO_M;
+      const zero_m = 100 * YD_TO_M;
+
+      const tempK = (tempF - 32) * (5 / 9) + 273.15;
+      const speedSound = Math.sqrt(1.4 * 287.05 * tempK);
+      const density = (pressInHg * 3386.39) / (287.05 * tempK);
+      const refArea = (Math.PI / 4) * (IN_TO_M ** 2);
+      const dragConst = (density * refArea) / (2.0 * 0.45359237 * bcG7);
+
+      const windRad = (windClock * 30.0) * (Math.PI / 180);
+      const wMps = windMph * 0.44704;
+      const wx = -wMps * Math.cos(windRad);
+      const wz = -wMps * Math.sin(windRad);
+
+      function derivs(vx, vy, vz) {
+        const vrx = vx - wx, vrz = vz - wz;
+        const vr = Math.sqrt(vrx * vrx + vy * vy + vrz * vrz);
+        const ad = dragConst * (vr * vr) * getCd(vr / speedSound);
+        return [-ad * (vrx / vr), -g - ad * (vy / vr), -ad * (vrz / vr)];
+      }
+
+      function zeroRK4(angle) {
+        let x = 0, y = -sightH_m, vx = v0 * Math.cos(angle), vy = v0 * Math.sin(angle);
+        const dt = 0.0008;
+        let px = 0, py = -sightH_m;
+        while (x < zero_m) {
+          px = x; py = y;
+          const zd = (cvx, cvy) => {
+            const vc = Math.sqrt(cvx * cvx + cvy * cvy);
+            const ad = dragConst * (vc * vc) * getCd(vc / speedSound);
+            return [-ad * (cvx / vc), -g - ad * (cvy / vc)];
+          };
+          const [k1x, k1y] = zd(vx, vy);
+          const [k2x, k2y] = zd(vx + 0.5 * dt * k1x, vy + 0.5 * dt * k1y);
+          const [k3x, k3y] = zd(vx + 0.5 * dt * k2x, vy + 0.5 * dt * k2y);
+          const [k4x, k4y] = zd(vx + dt * k3x, vy + dt * k3y);
+          x += vx * dt; y += vy * dt;
+          vx += (dt / 6) * (k1x + 2 * k2x + 2 * k3x + k4x);
+          vy += (dt / 6) * (k1y + 2 * k2y + 2 * k3y + k4y);
+        }
+        const frac = (x !== px) ? (zero_m - px) / (x - px) : 1.0;
+        return py + frac * (y - py);
+      }
+
+      let zeroTheta = Math.atan(sightH_m / zero_m);
+      for (let i = 0; i < 6; i++) {
+        let err = zeroRK4(zeroTheta);
+        if (Math.abs(err) < 0.00001) break;
+        zeroTheta -= err / zero_m;
+      }
+
+      const totalPitch = launchPitch + zeroTheta;
+      const dt = recordTrace ? 0.0012 : 0.0008;
+      let t = 0, x = 0, y = -sightH_m, z = 0;
+      let px = 0, py = -sightH_m, pz = 0, pt = 0;
+      let vx = v0 * Math.cos(totalPitch);
+      let vy = v0 * Math.sin(totalPitch);
+      let vz = 0;
+
+      const tRatio = twistIn / diaIn;
+      const lRatio = lenIn / diaIn;
+      const ft = ((tempF + 460) / 519.0) * (29.92 / pressInHg);
+      let sg = (30.0 * wtGr) / ((tRatio ** 2) * (diaIn ** 3) * lRatio * (1.0 + (lRatio ** 2)));
+      sg = (sg * Math.cbrt(mvFps / 2800.0)) / ft;
+
+      const stabilityFactor = Math.max(0.6, Math.min(2.0, sg));
+      const transonicKickYawRate = recordTrace ? gaussianRandom(0, 0.0011 / stabilityFactor) : 0;
+      const transonicKickPitchRate = recordTrace ? gaussianRandom(0, (0.0011 * 1.15) / stabilityFactor) : 0;
+
+      const omega = 7.2921159e-5;
+      const latRad = latDeg * (Math.PI / 180);
+      const azRad = azDeg * (Math.PI / 180);
+
+      const tracePoints = [];
+      let transonicTime = 0;
+      let isHit = false;
+      let isBermHit = false;
+      let hitPointWorld = null;
+      let finalMach = 2.0;
+
+      const cosYaw = Math.cos(launchYaw);
+      const sinYaw = Math.sin(launchYaw);
+
+      function toWorld(bx, by, bz) {
+        const wx3 = -bx * sinYaw + bz * cosYaw;
+        const wz3 = -bx * cosYaw - bz * sinYaw;
+        return new THREE.Vector3(wx3, by, wz3);
+      }
+
+      let stepCount = 0;
+      const targetPlaneZ = activeTargetSpec.worldCenter.z;
+
+      while (x < maxDistM) {
+        px = x; py = y; pz = z; pt = t;
+        const [k1x, k1y, k1z] = derivs(vx, vy, vz);
+        const [k2x, k2y, k2z] = derivs(vx + 0.5 * dt * k1x, vy + 0.5 * dt * k1y, vz + 0.5 * dt * k1z);
+        const [k3x, k3y, k3z] = derivs(vx + 0.5 * dt * k2x, vy + 0.5 * dt * k2y, vz + 0.5 * dt * k2z);
+        const [k4x, k4y, k4z] = derivs(vx + dt * k3x, vy + dt * k3y, vz + dt * k3z);
+
+        x += vx * dt; y += vy * dt; z += vz * dt;
+        vx += (dt / 6) * (k1x + 2 * k2x + 2 * k3x + k4x);
+        vy += (dt / 6) * (k1y + 2 * k2y + 2 * k3y + k4y);
+        vz += (dt / 6) * (k1z + 2 * k2z + 2 * k3z + k4z);
+        t += dt;
+
+        const curSpeed = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        finalMach = curSpeed / speedSound;
+
+        if (finalMach <= 1.25 && finalMach >= 0.85) {
+          transonicTime += dt;
+          if (recordTrace) {
+            vy += curSpeed * transonicKickPitchRate * dt;
+            vz += curSpeed * transonicKickYawRate * dt;
+          }
+        }
+
+        if (recordTrace) {
+          const spin_m = (1.25 * (sg + 1.2) * (t ** 1.83)) * IN_TO_M;
+          const corH_m = omega * x * t * Math.sin(latRad);
+          const corV_m = omega * v0 * (t ** 2) * Math.cos(latRad) * Math.sin(azRad);
+
+          const worldPt = toWorld(x, y + corV_m, z + spin_m + corH_m);
+
+          if (stepCount % 3 === 0) {
+            tracePoints.push(worldPt.clone());
+          }
+          stepCount++;
+
+          if (worldPt.z <= targetPlaneZ) {
+            const dx = worldPt.x - activeTargetSpec.worldCenter.x;
+            const dy = worldPt.y - activeTargetSpec.worldCenter.y;
+
+            let plateHit = false;
+            if (activeTargetSpec.shape === 'rect') {
+              plateHit = Math.abs(dx) <= activeTargetSpec.halfW && Math.abs(dy) <= activeTargetSpec.halfH;
+            } else {
+              plateHit = Math.sqrt(dx * dx + dy * dy) <= activeTargetSpec.radius;
+            }
+
+            if (plateHit) {
+              isHit = true;
+              hitPointWorld = new THREE.Vector3(worldPt.x, worldPt.y, targetPlaneZ);
+              tracePoints.push(hitPointWorld.clone());
+              break;
+            }
+          }
+
+          const bermSurfY = getBermSurfaceY(worldPt.x, worldPt.z);
+          if (worldPt.y <= bermSurfY) {
+            isBermHit = true;
+            hitPointWorld = worldPt.clone();
+            hitPointWorld.y = bermSurfY;
+            tracePoints.push(hitPointWorld.clone());
+            break;
+          }
+
+          const groundY = getTerrainHeight(worldPt.x, worldPt.z);
+          if (worldPt.y <= groundY && x > 15) {
+            hitPointWorld = worldPt.clone();
+            hitPointWorld.y = groundY;
+            tracePoints.push(hitPointWorld.clone());
+            break;
+          }
+        }
+      }
+
+      const frac = (x !== px) ? (maxDistM - px) / (x - px) : 1.0;
+      const yExact = py + frac * (y - py);
+      const zExact = pz + frac * (z - pz);
+      const tExact = pt + frac * (t - pt);
+
+      const spinExact = (1.25 * (sg + 1.2) * (tExact ** 1.83)) * IN_TO_M;
+      const corHExact = omega * maxDistM * tExact * Math.sin(latRad);
+      const corVExact = omega * v0 * (tExact ** 2) * Math.cos(latRad) * Math.sin(azRad);
+
+      return {
+        tof: tExact,
+        finalMach,
+        transonicTime,
+        sg,
+        isHit,
+        isBermHit,
+        hitPointWorld,
+        tracePoints,
+        endBallisticY: yExact + corVExact,
+        endBallisticZ: zExact + spinExact + corHExact,
+        endBallisticX: maxDistM
+      };
+    }
+
+    // =========================================================================
+    // 7. POP-UP SOLVER & KESTREL HELPERS
+    // =========================================================================
+    function runPopSolver() {
+      const { b, ammoSpecs } = getEquipped();
+      const r = parseFloat(document.getElementById('sol-range').value) || 500;
+      const ws = parseFloat(document.getElementById('sol-wind').value) || 0;
+      const wc = parseFloat(document.getElementById('sol-clock').value) || 3;
+
+      const targetDistM = r * YD_TO_M;
+
+      const sim = simulate3DTrajectory({
+        launchYaw: 0,
+        launchPitch: 0,
+        mvFps: ammoSpecs.mv,
+        bcG7: ammoSpecs.bc,
+        wtGr: b.wt,
+        diaIn: b.dia,
+        lenIn: b.len,
+        twistIn: b.twist,
+        tempF: state.tempF,
+        pressInHg: state.pressInHg,
+        windMph: ws,
+        windClock: wc,
+        latDeg: state.latitudeDeg,
+        azDeg: state.azimuthDeg,
+        maxDistM: targetDistM,
+        recordTrace: false
+      });
+
+      const elevMrad = Math.atan2(-sim.endBallisticY, targetDistM) * 1000.0;
+      const windMrad = Math.atan2(-sim.endBallisticZ, targetDistM) * 1000.0;
+
+      document.getElementById('sol-out-elev').innerText = `${elevMrad.toFixed(2)} MRAD`;
+      const dir = windMrad >= 0 ? 'R' : 'L';
+      document.getElementById('sol-out-wind').innerText = `${Math.abs(windMrad).toFixed(2)} ${dir}`;
+      document.getElementById('sol-out-tof').innerText = `${sim.tof.toFixed(2)}s`;
+    }
+
+    function toggleWin(id) {
+      const el = document.getElementById(id);
+      const isOpen = el.classList.contains('open');
+      document.querySelectorAll('.floating-win').forEach(w => w.classList.remove('open'));
+      if (!isOpen) {
+        el.classList.add('open');
+        if (id === 'win-solver') {
+          document.getElementById('sol-range').value = state.distanceYd;
+          runPopSolver();
+        }
+      }
+    }
+
+    function openKestrel() {
+      if (state.eq.wind !== 'wind_3') {
+        setFeedback("LOCKED — PURCHASE KESTREL IN ARMORY", "#e5a93b");
+        return;
+      }
+      toggleWin('win-kestrel');
+    }
+
+    // =========================================================================
+    // 8. FIRING ROUND IN 3D SPACE
+    // =========================================================================
+    function fireRound() {
+      if (state.inFlight || state.benchOpen) return;
+      const { b, brl, chs, ammoSpecs } = getEquipped();
+
+      if (state.cash < ammoSpecs.roundCost) {
+        setFeedback("INSUFFICIENT FUNDS FOR AMMO!", "#e53e3e");
+        return;
+      }
+
+      state.cash -= ammoSpecs.roundCost;
+      saveProgress();
+      updateTopUI();
+      state.inFlight = true;
+      document.getElementById('btn-fire').disabled = true;
+      setFeedback("SHOT FIRED — TRACKING 3D TRACE...", "#e5a93b");
+
+      state.muzzleFlashFrames = 3;
+      spawnMuzzleSmoke();
+      state.boltCycleTimer = 0.0;
+      state.brassEjected = false;
+
+      const actualMV = gaussianRandom(ammoSpecs.mv, ammoSpecs.mvSD);
+      const actualBC = gaussianRandom(ammoSpecs.bc, ammoSpecs.bc * ammoSpecs.bcSDPct);
+
+      // Record velocity on Range Chronograph HUD
+      state.chronoLog.push(actualMV);
+      if (state.chronoLog.length > 10) state.chronoLog.shift();
+      updateChronoHUD();
+
+      const effectiveMoa = Math.max(0.12, brl.groupMoa + chs.groupBonus + ammoSpecs.groupBonusMoa);
+      const dispStdRad = ((effectiveMoa * 0.290888) / 2.5) / 1000.0;
+
+      const turretElevRad = state.turretElev / 1000.0;
+      const turretWindRad = state.turretWind / 1000.0;
+      const bagElevRad = state.bagElevMrad / 1000.0;
+
+      const borePitch = state.pitchRad + state.swayY + turretElevRad + bagElevRad + gaussianRandom(0, dispStdRad);
+      const boreYaw = state.yawRad - state.swayX - turretWindRad + gaussianRandom(0, dispStdRad);
+
+      const sim = simulate3DTrajectory({
+        launchYaw: boreYaw,
+        launchPitch: borePitch,
+        mvFps: actualMV,
+        bcG7: actualBC,
+        wtGr: b.wt,
+        diaIn: b.dia,
+        lenIn: b.len,
+        twistIn: b.twist,
+        tempF: state.tempF,
+        pressInHg: state.pressInHg,
+        windMph: state.curWindMph,
+        windClock: state.curWindClock,
+        latDeg: state.latitudeDeg,
+        azDeg: state.azimuthDeg,
+        maxDistM: state.distanceYd * YD_TO_M + 45,
+        recordTrace: true
+      });
+
+      state.recoilPitch = 0.0032 * chs.recoilMult * (b.wt / 100);
+      state.recoilYaw = gaussianRandom(0, 0.0007 * chs.recoilMult);
+
+      if (sim.tracePoints.length > 1) {
+        spawn3DTrace(sim.tracePoints);
+      }
+
+      setTimeout(() => {
+        state.inFlight = false;
+        document.getElementById('btn-fire').disabled = false;
+
+        const machNote = sim.finalMach < 1.15 ? ` [Mach ${sim.finalMach.toFixed(2)} Transonic]` : '';
+
+        if (sim.isHit) {
+          spawn3DSteelSpark(sim.hitPointWorld);
+          spawn3DImpactDecal(sim.hitPointWorld, true, false);
+          state.plateSwingVel -= 0.048 * Math.min(1.5, b.wt / 140);
+
+          const multMap = {
+            'ipsc_full': 1.0,
+            'ipsc_23': 1.6,
+            'gong_15moa': 3.0,
+            'gong_10moa': 5.0
+          };
+          const mult = multMap[state.targetType] || 1.0;
+          const payout = parseFloat(((state.distanceYd * 0.04) * mult).toFixed(2));
+          state.cash += payout;
+          saveProgress();
+          updateTopUI();
+          setFeedback(`STEEL IMPACT (${state.distanceYd} YD)! +$${payout.toFixed(2)}${machNote}`, "#38a169");
+        } else {
+          if (sim.hitPointWorld) {
+            spawn3DDirtSplash(sim.hitPointWorld, sim.isBermHit);
+            spawn3DImpactDecal(sim.hitPointWorld, false, sim.isBermHit);
+          }
+          const dxIn = sim.hitPointWorld ? ((sim.hitPointWorld.x - activeTargetSpec.worldCenter.x) / IN_TO_M).toFixed(1) : '?';
+          const dyIn = sim.hitPointWorld ? ((sim.hitPointWorld.y - activeTargetSpec.worldCenter.y) / IN_TO_M).toFixed(1) : '?';
+          const where = sim.isBermHit ? 'BERM' : 'GROUND';
+          setFeedback(`MISS (${where})! Splash: ${dxIn >= 0 ? '+' : ''}${dxIn}" H, ${dyIn >= 0 ? '+' : ''}${dyIn}" V${machNote}`, "#e53e3e");
+        }
+      }, Math.min(sim.tof * 850, 2400));
+    }
+
+    // =========================================================================
+    // 9. DUAL-CAMERA RANGE RENDER LOOP
+    // =========================================================================
+    const retCanvas = document.getElementById('reticleCanvas');
+    const rCtx = retCanvas.getContext('2d');
+
+    function resizeViewports() {
+      const wrap = document.getElementById('viewport-wrap');
+      const w = wrap.clientWidth;
+      const h = wrap.clientHeight;
+      renderer.setSize(w, h, false);
+      retCanvas.width = w;
+      retCanvas.height = h;
+      mainCamera.aspect = w / h;
+      mainCamera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resizeViewports);
+    resizeViewports();
+
+    let lastFrameTime = performance.now();
+
+    function animate(timestamp) {
+      const dtSec = Math.min(0.05, (timestamp - lastFrameTime) * 0.001);
+      lastFrameTime = timestamp;
+      const tSec = timestamp * 0.001;
+
+      if (!state.benchOpen) {
+        state.windPhase += 0.008;
+        state.curWindMph = Math.max(0.5, state.baseWindMph + Math.sin(state.windPhase) * 1.8 + Math.cos(state.windPhase * 0.43) * 0.9);
+        state.curWindClock = state.baseWindClock + Math.sin(state.windPhase * 0.6) * 0.45;
+        if (state.curWindClock <= 0) state.curWindClock += 12;
+        if (state.curWindClock > 12) state.curWindClock -= 12;
+
+        if (state.eq.wind === 'wind_3') {
+          document.getElementById('kes-spd').innerText = `${state.curWindMph.toFixed(1)} MPH`;
+          document.getElementById('kes-dir').innerText = `${state.curWindClock.toFixed(1)} Clock`;
+        }
+
+        if (Math.abs(state.plateSwingAngle) > 0.0001 || Math.abs(state.plateSwingVel) > 0.0001) {
+          const springForce = -0.055 * state.plateSwingAngle;
+          state.plateSwingVel = (state.plateSwingVel + springForce) * 0.93;
+          state.plateSwingAngle += state.plateSwingVel;
+          platePivot.rotation.x = state.plateSwingAngle;
+        }
+
+        if (state.muzzleFlashFrames > 0) {
+          muzzleFlashGroup.visible = true;
+          muzzleFlashGroup.rotation.z = Math.random() * Math.PI;
+          state.muzzleFlashFrames--;
+        } else {
+          muzzleFlashGroup.visible = false;
+        }
+
+        const windDriftVelX = -Math.sin((state.curWindClock * 30) * Math.PI / 180) * (state.curWindMph * 0.08);
+        for (let i = activeMuzzleSmoke.length - 1; i >= 0; i--) {
+          const sm = activeMuzzleSmoke[i];
+          sm.life -= dtSec * 2.2;
+          sm.sp.position.y += sm.vy * dtSec;
+          sm.sp.position.z += sm.vz * dtSec;
+          sm.sp.position.x += windDriftVelX * 0.25 * dtSec;
+          sm.sp.scale.addScalar(0.18 * dtSec);
+          sm.mat.opacity = Math.max(0, sm.life * 0.36);
+          if (sm.life <= 0) {
+            sm.mat.dispose();
+            scene.remove(sm.sp);
+            activeMuzzleSmoke.splice(i, 1);
+          }
+        }
+
+        if (state.boltCycleTimer >= 0) {
+          state.boltCycleTimer += dtSec;
+          const tB = state.boltCycleTimer;
+
+          if (tB < 0.28) {
+            boltPivot.rotation.z = 0;
+            boltPivot.position.z = -0.02;
+          } else if (tB < 0.40) {
+            const p = (tB - 0.28) / 0.12;
+            boltPivot.rotation.z = p * 1.15;
+            boltPivot.position.z = -0.02;
+          } else if (tB < 0.56) {
+            const p = (tB - 0.40) / 0.16;
+            boltPivot.rotation.z = 1.15;
+            boltPivot.position.z = -0.02 + p * 0.075;
+            if (p > 0.7 && !state.brassEjected) {
+              state.brassEjected = true;
+              spawnEjectedBrass();
+            }
+          } else if (tB < 0.72) {
+            const p = 1.0 - (tB - 0.56) / 0.16;
+            boltPivot.rotation.z = 1.15;
+            boltPivot.position.z = -0.02 + p * 0.075;
+          } else if (tB < 0.84) {
+            const p = 1.0 - (tB - 0.72) / 0.12;
+            boltPivot.rotation.z = p * 1.15;
+            boltPivot.position.z = -0.02;
+          } else {
+            boltPivot.rotation.z = 0;
+            boltPivot.position.z = -0.02;
+            state.boltCycleTimer = -1;
+          }
+        }
+
+        for (let i = activeBrass.length - 1; i >= 0; i--) {
+          const br = activeBrass[i];
+          br.life -= dtSec;
+          br.mesh.position.addScaledVector(br.vel, dtSec);
+          br.vel.y -= 9.8 * dtSec;
+          br.mesh.rotation.x += br.spinX * dtSec;
+          br.mesh.rotation.z += br.spinZ * dtSec;
+          if (br.life <= 0 || br.mesh.position.y < -0.5) {
+            scene.remove(br.mesh);
+            activeBrass.splice(i, 1);
+          }
+        }
+
+        for (let i = activeTraces.length - 1; i >= 0; i--) {
+          const tr = activeTraces[i];
+          tr.life -= 0.014;
+          tr.group.position.x += windDriftVelX * 0.008;
+          tr.group.position.y += 0.002;
+          for (let m = 0; m < tr.mats.length; m++) {
+            tr.mats[m].opacity = Math.max(0, tr.life * tr.baseOpacities[m]);
+          }
+          if (tr.life <= 0) {
+            tr.group.children.forEach(c => c.geometry.dispose());
+            tr.mats.forEach(m => m.dispose());
+            scene.remove(tr.group);
+            activeTraces.splice(i, 1);
+          }
+        }
+
+        for (let i = activeSplashes.length - 1; i >= 0; i--) {
+          const sp = activeSplashes[i];
+          if (sp.isSpark) {
+            sp.life -= 0.045;
+            sp.group.scale.addScalar(0.18);
+            sp.coreMat.opacity = Math.max(0, sp.life * 2);
+            if (sp.life <= 0) {
+              scene.remove(sp.group);
+              activeSplashes.splice(i, 1);
+            }
+            continue;
+          }
+
+          sp.life -= 0.022;
+
+          sp.puffs.forEach(pf => {
+            pf.sprite.position.x += (pf.vx + windDriftVelX * (1.0 - sp.life * 0.5)) * 0.016;
+            pf.sprite.position.y += pf.vy * 0.016;
+            pf.sprite.position.z += pf.vz * 0.016;
+
+            pf.vx *= pf.drag;
+            pf.vy *= pf.drag;
+            pf.vz *= pf.drag;
+
+            pf.sprite.scale.x += pf.growRate * 0.016;
+            pf.sprite.scale.y += pf.growRate * 0.018;
+            pf.mat.opacity = Math.max(0, sp.life * pf.baseOpacity);
+          });
+
+          sp.clods.forEach(cd => {
+            cd.mesh.position.x += cd.vx * 0.016;
+            cd.mesh.position.y += cd.vy * 0.016;
+            cd.mesh.position.z += cd.vz * 0.016;
+            cd.vy -= 9.8 * 0.016;
+            if (cd.mesh.position.y < 0) {
+              cd.mesh.position.y = 0;
+              cd.vx *= 0.5;
+              cd.vz *= 0.5;
+            }
+          });
+
+          if (sp.life <= 0) {
+            sp.puffs.forEach(pf => pf.mat.dispose());
+            scene.remove(sp.group);
+            activeSplashes.splice(i, 1);
+          }
+        }
+
+        const { o, chs } = getEquipped();
+        if (state.holdingBreath && state.oxygen > 0) {
+          state.oxygen = Math.max(0, state.oxygen - 0.38);
+        } else {
+          state.holdingBreath = false;
+          document.getElementById('btn-breath').classList.remove('holding');
+          state.oxygen = Math.min(100, state.oxygen + 0.25);
+        }
+        document.getElementById('hud-o2').innerText = `${Math.round(state.oxygen)}%`;
+
+        const breathMult = state.holdingBreath ? 0.12 : (1.0 + (100 - state.oxygen) * 0.015);
+        const swayAmpRad = (0.22 * chs.swayMult * breathMult) / 1000.0;
+        state.swayX = Math.sin(tSec * 1.7) * swayAmpRad;
+        state.swayY = Math.sin(tSec * 3.4) * (swayAmpRad * 0.65);
+
+        state.recoilPitch *= 0.88;
+        state.recoilYaw *= 0.88;
+
+        const totalYaw = state.yawRad + state.swayX + state.recoilYaw;
+        const totalPitch = state.pitchRad + state.swayY + state.recoilPitch;
+
+        const euler = new THREE.Euler(totalPitch, totalYaw, 0, 'YXZ');
+        rifleRig.quaternion.setFromEuler(euler);
+        rifleRig.updateMatrixWorld();
+
+        const W = retCanvas.width;
+        const H = retCanvas.height;
+        rCtx.clearRect(0, 0, W, H);
+
+        const opticFovDeg = 2 * Math.atan(Math.tan((SCOPE_BASE_FOV_DEG * Math.PI / 180) / 2) / state.zoom) * (180 / Math.PI);
+
+        if (state.adsMode) {
+          rifleRig.visible = false;
+          scopeCamera.fov = opticFovDeg;
+          scopeCamera.aspect = W / H;
+          scopeCamera.position.set(0, 0, 0);
+          scopeCamera.quaternion.copy(rifleRig.quaternion);
+          scopeCamera.updateProjectionMatrix();
+
+          renderer.setViewport(0, 0, W, H);
+          renderer.setScissorTest(false);
+          renderer.render(scene, scopeCamera);
+
+          drawScopeOverlay(W, H, opticFovDeg, o, false);
+        } else {
+          rifleRig.visible = true;
+          mainCamera.position.set(0, 0.055, 0.18);
+          mainCamera.quaternion.copy(rifleRig.quaternion);
+
+          renderer.setViewport(0, 0, W, H);
+          renderer.setScissorTest(false);
+          renderer.render(scene, mainCamera);
+
+          const pipSize = Math.round(Math.min(W, H) * 0.56);
+          const pipX = Math.round((W - pipSize) / 2);
+          const pipY = Math.round((H - pipSize) / 2);
+
+          scopeCamera.fov = opticFovDeg;
+          scopeCamera.aspect = 1.0;
+          scopeCamera.position.set(0, 0, 0);
+          scopeCamera.quaternion.copy(rifleRig.quaternion);
+          scopeCamera.updateProjectionMatrix();
+
+          renderer.setScissorTest(true);
+          renderer.setScissor(pipX, pipY, pipSize, pipSize);
+          renderer.setViewport(pipX, pipY, pipSize, pipSize);
+          renderer.render(scene, scopeCamera);
+          renderer.setScissorTest(false);
+
+          drawScopeOverlay(W, H, opticFovDeg, o, true, pipSize);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function drawScopeOverlay(W, H, opticFovDeg, o, isPiP, pipSize = 0) {
+      const cx = W / 2;
+      const cy = H / 2;
+      const scopeRadius = isPiP ? (pipSize / 2) : (Math.min(cx, cy) - 16);
+
+      const scopeViewHeightPx = isPiP ? pipSize : H;
+      const verticalFovRad = opticFovDeg * (Math.PI / 180);
+      const pxPerTrueMrad = (scopeViewHeightPx / 2) / Math.tan(verticalFovRad / 2) * 0.001;
+
+      rCtx.save();
+      if (isPiP) {
+        rCtx.strokeStyle = '#090b0e';
+        rCtx.lineWidth = scopeRadius * 0.58;
+        rCtx.beginPath();
+        rCtx.arc(cx, cy, scopeRadius * 1.18, 0, Math.PI * 2);
+        rCtx.stroke();
+      } else {
+        rCtx.fillStyle = '#090b0e';
+        rCtx.beginPath();
+        rCtx.rect(0, 0, W, H);
+        rCtx.arc(cx, cy, scopeRadius, 0, Math.PI * 2, true);
+        rCtx.fill();
+      }
+
+      rCtx.beginPath();
+      rCtx.arc(cx, cy, scopeRadius, 0, Math.PI * 2);
+      rCtx.clip();
+
+      const vig = rCtx.createRadialGradient(cx, cy, scopeRadius * 0.74, cx, cy, scopeRadius);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(0,0,0,0.62)');
+      rCtx.fillStyle = vig;
+      rCtx.fillRect(cx - scopeRadius, cy - scopeRadius, scopeRadius * 2, scopeRadius * 2);
+
+      const baseFov10x = 2 * Math.atan(Math.tan((SCOPE_BASE_FOV_DEG * Math.PI / 180) / 2) / 10.0);
+      const pxPer10xMrad = (scopeViewHeightPx / 2) / Math.tan(baseFov10x / 2) * 0.001;
+      const mradPx = o.ffp ? pxPerTrueMrad : pxPer10xMrad;
+
+      rCtx.strokeStyle = 'rgba(10, 12, 16, 0.92)';
+      rCtx.fillStyle = 'rgba(10, 12, 16, 0.92)';
+      rCtx.font = `600 ${Math.max(9, Math.round(mradPx * 0.24))}px sans-serif`;
+      rCtx.textAlign = 'center';
+      rCtx.textBaseline = 'middle';
+
+      if (o.reticle === 'mildot') {
+        rCtx.lineWidth = 1.1;
+        rCtx.beginPath();
+        rCtx.moveTo(cx, cy - scopeRadius); rCtx.lineTo(cx, cy + scopeRadius);
+        rCtx.moveTo(cx - scopeRadius, cy); rCtx.lineTo(cx + scopeRadius, cy);
+        rCtx.stroke();
+
+        const postStart = 5 * mradPx;
+        rCtx.lineWidth = Math.max(3.5, mradPx * 0.12);
+        rCtx.beginPath();
+        rCtx.moveTo(cx - scopeRadius, cy); rCtx.lineTo(cx - postStart, cy);
+        rCtx.moveTo(cx + postStart, cy); rCtx.lineTo(cx + scopeRadius, cy);
+        rCtx.moveTo(cx, cy + postStart); rCtx.lineTo(cx, cy + scopeRadius);
+        rCtx.stroke();
+
+        const dotR = Math.max(1.8, mradPx * 0.10);
+        for (let m = -4; m <= 4; m++) {
+          if (m === 0) continue;
+          const p = m * mradPx;
+          rCtx.beginPath();
+          rCtx.ellipse(cx + p, cy, dotR * 1.15, dotR * 0.85, 0, 0, Math.PI * 2);
+          rCtx.fill();
+          rCtx.beginPath();
+          rCtx.ellipse(cx, cy + p, dotR * 0.85, dotR * 1.15, 0, 0, Math.PI * 2);
+          rCtx.fill();
+        }
+      } else if (o.reticle === 'simple_tree') {
+        rCtx.lineWidth = 1.1;
+        rCtx.beginPath();
+        rCtx.moveTo(cx, cy - scopeRadius); rCtx.lineTo(cx, cy + scopeRadius);
+        rCtx.moveTo(cx - scopeRadius, cy); rCtx.lineTo(cx + scopeRadius, cy);
+        rCtx.stroke();
+
+        for (let m = -10; m <= 10; m += 0.5) {
+          const mr = parseFloat(m.toFixed(1));
+          if (mr === 0) continue;
+          const p = mr * mradPx;
+          const isWhole = Number.isInteger(mr);
+          const halfTick = isWhole ? (mradPx * 0.18) : (mradPx * 0.09);
+
+          rCtx.lineWidth = isWhole ? 1.3 : 1.0;
+          rCtx.beginPath();
+          rCtx.moveTo(cx + p, cy - halfTick); rCtx.lineTo(cx + p, cy + halfTick);
+          rCtx.moveTo(cx - halfTick, cy + p); rCtx.lineTo(cx + halfTick, cy + p);
+          rCtx.stroke();
+
+          if (isWhole && Math.abs(mr) % 2 === 0 && Math.abs(mr) <= 8) {
+            if (mr > 0) rCtx.fillText(`${mr}`, cx - mradPx * 0.42, cy + p);
+            rCtx.fillText(`${Math.abs(mr)}`, cx + p, cy - mradPx * 0.36);
+          }
+
+          if (mr >= 1 && isWhole && mr <= 8) {
+            const maxW = Math.min(Math.ceil(mr * 0.6), 4);
+            for (let w = -maxW; w <= maxW; w++) {
+              if (w === 0) continue;
+              rCtx.beginPath();
+              rCtx.arc(cx + w * mradPx, cy + p, Math.max(1.3, mradPx * 0.045), 0, Math.PI * 2);
+              rCtx.fill();
+            }
+          }
+        }
+      } else {
+        const maxM = o.reticle === 'elr_tree' ? 16 : 12;
+        const centerGap = mradPx * 0.25;
+        rCtx.lineWidth = 1.0;
+        rCtx.beginPath();
+        rCtx.moveTo(cx, cy - scopeRadius); rCtx.lineTo(cx, cy - centerGap);
+        rCtx.moveTo(cx, cy + centerGap); rCtx.lineTo(cx, cy + scopeRadius);
+        rCtx.moveTo(cx - scopeRadius, cy); rCtx.lineTo(cx - centerGap, cy);
+        rCtx.moveTo(cx + centerGap, cy); rCtx.lineTo(cx + scopeRadius, cy);
+        rCtx.stroke();
+
+        rCtx.beginPath();
+        rCtx.arc(cx, cy, Math.max(1.4, mradPx * 0.035), 0, Math.PI * 2);
+        rCtx.fill();
+
+        for (let m = -maxM; m <= maxM; m += 0.2) {
+          const mr = parseFloat(m.toFixed(1));
+          if (Math.abs(mr) < 0.3) continue;
+          const p = mr * mradPx;
+          const isWhole = Number.isInteger(mr);
+          const isHalf = Number.isInteger(mr * 2) && !isWhole;
+          const halfTick = isWhole ? (mradPx * 0.20) : (isHalf ? mradPx * 0.12 : mradPx * 0.065);
+
+          rCtx.lineWidth = isWhole ? 1.3 : 0.9;
+          rCtx.beginPath();
+          rCtx.moveTo(cx + p, cy - halfTick); rCtx.lineTo(cx + p, cy + halfTick);
+          rCtx.moveTo(cx - halfTick, cy + p); rCtx.lineTo(cx + halfTick, cy + p);
+          rCtx.stroke();
+
+          if (isWhole && Math.abs(mr) % 2 === 0) {
+            if (mr > 0) rCtx.fillText(`${mr}`, cx - mradPx * 0.45, cy + p);
+            if (Math.abs(mr) <= 10) rCtx.fillText(`${Math.abs(mr)}`, cx + p, cy - mradPx * 0.38);
+          }
+
+          if (mr >= 1 && isWhole) {
+            const maxW = Math.min(Math.floor(mr * 0.65) + 1, 8);
+            for (let w = -maxW; w <= maxW; w += 0.5) {
+              if (w === 0) continue;
+              const isWholeW = Number.isInteger(w);
+              rCtx.beginPath();
+              rCtx.arc(
+                cx + w * mradPx,
+                cy + p,
+                isWholeW ? Math.max(1.5, mradPx * 0.045) : Math.max(0.9, mradPx * 0.025),
+                0,
+                Math.PI * 2
+              );
+              rCtx.fill();
+            }
+          }
+        }
+      }
+
+      rCtx.restore();
+
+      rCtx.strokeStyle = '#252c35';
+      rCtx.lineWidth = isPiP ? 5 : 6;
+      rCtx.beginPath();
+      rCtx.arc(cx, cy, scopeRadius, 0, Math.PI * 2);
+      rCtx.stroke();
+    }
+
+    // =========================================================================
+    // 10. CONTROLS, RANGE SETUP & ARMORY UI
+    // =========================================================================
+    function changeRangeSetup() {
+      state.targetType = document.getElementById('sel-target-type').value;
+      state.distanceYd = parseFloat(document.getElementById('sel-distance').value);
+      document.getElementById('hud-dist').innerText = `${state.distanceYd} YD`;
+      rebuildRangeTarget();
+      setFeedback(`TARGET SET: ${state.distanceYd} YARDS`, "#e2e8f0");
+    }
+
+    function toggleADS() {
+      state.adsMode = !state.adsMode;
+      document.getElementById('hud-view-mode').innerText = state.adsMode ? 'SCOPE ADS' : '1X + PIP SCOPE';
+    }
+
+    function stepTurret(axis, delta) {
+      if (axis === 'elev') {
+        state.turretElev = Math.max(0, parseFloat((state.turretElev + delta).toFixed(1)));
+        document.getElementById('disp-elev').innerText = state.turretElev.toFixed(1);
+        document.getElementById('hud-elev').innerText = `${state.turretElev.toFixed(1)} MRAD`;
+      } else {
+        state.turretWind = parseFloat((state.turretWind + delta).toFixed(1));
+        const label = state.turretWind === 0 ? '0.0' : (state.turretWind > 0 ? `${state.turretWind.toFixed(1)} R` : `${Math.abs(state.turretWind).toFixed(1)} L`);
+        document.getElementById('disp-wind').innerText = label;
+        document.getElementById('hud-wind').innerText = `${label} MRAD`;
+      }
+    }
+
+    function stepZoom(dir) {
+      const { o } = getEquipped();
+      const step = o.maxZoom >= 25 ? 3 : 2;
+      state.zoom = Math.min(o.maxZoom, Math.max(o.minZoom, state.zoom + dir * step));
+      document.getElementById('hud-zoom').innerText = `${state.zoom.toFixed(1)}x`;
+      document.getElementById('disp-zoom-btn').innerText = `${state.zoom}x`;
+    }
+
+    function updateBag(val) {
+      state.bagElevMrad = parseFloat(val);
+      document.getElementById('disp-bag').innerText = `${state.bagElevMrad >= 0 ? '+' : ''}${state.bagElevMrad.toFixed(2)} MRAD`;
+    }
+
+    function setBreathHold(active) {
+      state.holdingBreath = active;
+      const btn = document.getElementById('btn-breath');
+      if (active) btn.classList.add('holding');
+      else btn.classList.remove('holding');
+    }
+
+    function rerollWind() {
+      state.baseWindMph = parseFloat((Math.random() * 14 + 2).toFixed(1));
+      state.baseWindClock = parseFloat((Math.floor(Math.random() * 12) + 1));
+      setFeedback("WIND CONDITIONS SHIFTED", "#4fd1c5");
+    }
+
+    function setFeedback(msg, color) {
+      const el = document.getElementById('hud-feedback');
+      el.innerText = msg;
+      el.style.color = color;
+    }
+
+    function updateTopUI() {
+      const { o, ammoSpecs } = getEquipped();
+      document.getElementById('ui-cash').innerText = `$${state.cash.toFixed(2)}`;
+      document.getElementById('ui-rifle-summary').innerText = `${ammoSpecs.label} | ${o.maxZoom}x ${o.ffp ? 'FFP' : 'SFP'}`;
+      document.getElementById('ui-ammo-cost').innerText = `-$${ammoSpecs.roundCost.toFixed(2)}/rd`;
+      document.getElementById('hud-focal').innerText = o.ffp ? '(FFP)' : '(SFP)';
+
+      const kesBtn = document.getElementById('btn-kestrel');
+      if (state.eq.wind === 'wind_3') kesBtn.classList.remove('locked');
+      else kesBtn.classList.add('locked');
+    }
+
+    let dragging = false, lastX = 0, lastY = 0;
+    threeCanvas.addEventListener('pointerdown', e => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    window.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      const sens = (state.adsMode ? 0.00018 : 0.0010) / (state.zoom / 10);
+      state.yawRad = Math.max(-0.35, Math.min(0.35, state.yawRad - dx * sens));
+      state.pitchRad = Math.max(-0.15, Math.min(0.25, state.pitchRad - dy * sens));
+    });
+    window.addEventListener('pointerup', () => dragging = false);
+
+    window.addEventListener('keydown', e => {
+      if (document.activeElement.tagName === 'INPUT') return;
+      if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') stepTurret('elev', +0.1);
+      if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') stepTurret('elev', -0.1);
+      if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') stepTurret('wind', +0.1);
+      if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') stepTurret('wind', -0.1);
+      if (e.key === 'x' || e.key === 'X') stepZoom(+1);
+      if (e.key === 'z' || e.key === 'Z') stepZoom(-1);
+      if (e.key === 'v' || e.key === 'V') toggleADS();
+      if (e.key === 'b' || e.key === 'B') setBreathHold(true);
+      if (e.code === 'Space') { e.preventDefault(); fireRound(); }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'b' || e.key === 'B') setBreathHold(false);
+    });
+
+    function openArmory() {
+      document.getElementById('modal-armory').classList.add('open');
+      renderArmory();
+    }
+    function closeArmory() {
+      document.getElementById('modal-armory').classList.remove('open');
+    }
+
+    function renderArmory() {
+      const container = document.getElementById('armory-list');
+      container.innerHTML = '';
+
+      const sections = [
+        { title: 'Optics & Reticles', key: 'optic', items: OPTICS, fmt: x => x.desc },
+        { title: 'Wind Intel Gear', key: 'wind', items: WIND_GEAR, fmt: x => x.desc },
+        { title: 'Factory Cases & Propellant (Overridden when Handload Equipped)', key: 'ammo', items: BRASS_POWDER, fmt: x => x.desc },
+        { title: 'Barrels & Actions', key: 'barrel', items: BARRELS, fmt: x => x.desc },
+        { title: 'Rifle Chassis', key: 'chassis', items: CHASSIS, fmt: x => x.desc },
+        { title: 'Precision Projectiles (25-Bullet Library)', key: 'bullet', items: BULLETS, fmt: x => `G7 BC: ${x.bc} | Base MV: ${x.mv} fps | Len: ${x.len}" | $${x.roundCost.toFixed(2)}/rd` }
+      ];
+
+      sections.forEach(sec => {
+        const h = document.createElement('div');
+        h.className = 'armory-cat';
+        h.innerText = sec.title;
+        container.appendChild(h);
+
+        sec.items.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'armory-item';
+          const isEq = state.eq[sec.key] === item.id;
+          const isUnl = state.unlocked.includes(item.id);
+
+          let btnHtml = '';
+          if (isEq) btnHtml = `<button class="btn-buy equipped">EQUIPPED</button>`;
+          else if (isUnl) btnHtml = `<button class="btn-buy" onclick="equipItem('${sec.key}', '${item.id}')">EQUIP</button>`;
+          else btnHtml = `<button class="btn-buy" onclick="buyItem('${sec.key}', '${item.id}', ${item.cost})">$${item.cost}</button>`;
+
+          row.innerHTML = `
+            <div>
+              <h4>${item.name}</h4>
+              <p>${sec.fmt(item)}</p>
+            </div>
+            <div>${btnHtml}</div>
+          `;
+          container.appendChild(row);
+        });
+      });
+    }
+
+    function buyItem(cat, id, cost) {
+      if (state.cash < cost) {
+        alert("Not enough funds! Hit more steel targets on the range.");
+        return;
+      }
+      state.cash -= cost;
+      state.unlocked.push(id);
+      equipItem(cat, id);
+    }
+
+    function equipItem(cat, id) {
+      state.eq[cat] = id;
+      if (cat === 'optic') {
+        const o = OPTICS.find(x => x.id === id);
+        state.zoom = Math.min(o.maxZoom, Math.max(o.minZoom, state.zoom));
+        document.getElementById('hud-zoom').innerText = `${state.zoom.toFixed(1)}x`;
+        document.getElementById('disp-zoom-btn').innerText = `${state.zoom}x`;
+      }
+      if (cat === 'bullet') {
+        state.chronoLog = [];
+        updateChronoHUD();
+      }
+      updateRifleAppearance();
+      saveProgress();
+      updateTopUI();
+      renderArmory();
+    }
+
+    loadProgress();
+    updateRifleAppearance();
+    updateTopUI();
+    updateChronoHUD();
+    rebuildRangeTarget();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
