@@ -1049,7 +1049,7 @@
     // =========================================================================
     // 4. PLAYER STATE, HANDLOAD RECIPE & INTERACTIVE BENCH STATE
     // =========================================================================
-    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v3';
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v4';
     const DEFAULT_SAVE = {
       cash: 250.00,
       unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
@@ -1902,7 +1902,6 @@
     const benchScene = new THREE.Scene();
     benchScene.background = new THREE.Color(0x0f1319);
 
-    // Lowered camera framing so the entire press, lever, and magnum cartridges fit comfortably in view
     const benchCamera = new THREE.PerspectiveCamera(38, 4 / 3, 0.01, 10);
     benchCamera.position.set(0.015, 0.075, 0.34);
     benchCamera.lookAt(0, 0.052, 0);
@@ -1914,7 +1913,6 @@
     bRim.position.set(-0.4, 0.4, -0.4);
     benchScene.add(bHemi, bKey, bRim);
 
-    // Bench World Group shifted downward (y = -0.042) so the press sits low on the screen
     const benchWorld = new THREE.Group();
     benchWorld.position.set(0, -0.042, 0);
     benchScene.add(benchWorld);
@@ -1932,7 +1930,7 @@
     benchEdgeTrim.position.set(0, -0.011, 0.23);
     benchWorld.add(tableMesh, benchEdgeTrim);
 
-    // Clean Gunsmithing Wall Backdrop (No barrel rack)
+    // Clean Gunsmithing Wall Backdrop
     const backWallMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.84, 0.52, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x171c24, roughness: 0.92 })
@@ -2011,7 +2009,7 @@
     );
     benchWorld.add(powderMeasureGroup);
 
-    // High-Fidelity Cast O-Frame Single-Stage Reloading Press (Mechanically Connected Handle)
+    // High-Fidelity Cast O-Frame Single-Stage Reloading Press
     const pressRedMat = new THREE.MeshStandardMaterial({ color: 0x9b2c2c, roughness: 0.42, metalness: 0.52 });
     const pressSteelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.22, metalness: 0.92 });
     const pressDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.8 });
@@ -2019,14 +2017,12 @@
     const pressGroup = new THREE.Group();
     pressGroup.position.set(0.025, 0, 0.01);
 
-    // Heavy Cast Base & Ram Boss
     const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.018, 0.074), pressRedMat);
     pressBase.position.y = 0.009;
 
     const ramBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.036, 20), pressRedMat);
     ramBoss.position.set(0, 0.024, 0.008);
 
-    // Dual O-Frame Pillars + Rear Rib + Top Die Crown (Tall enough for .375 CheyTac)
     const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
     leftPillar.position.set(-0.026, 0.108, -0.014);
     const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
@@ -2047,7 +2043,6 @@
     const dieTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0075, 0.012, 18), pressSteelMat);
     dieTopCap.position.set(0, 0.276, 0.008);
 
-    // External Pivot Cross-Shaft & Side Linkage Lugs (Outside the right pillar — zero clipping!)
     const crossShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.094, 16), pressSteelMat);
     crossShaft.rotation.z = Math.PI / 2;
     crossShaft.position.set(0.004, 0.024, 0.008);
@@ -2056,18 +2051,15 @@
     rightPivotBoss.rotation.z = Math.PI / 2;
     rightPivotBoss.position.set(0.044, 0.024, 0.008);
 
-    // Articulated Toggle Link Connecting Cross-Shaft to Bottom of Ram
     const toggleLinkMesh = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.032, 0.012), pressDarkMat);
     toggleLinkMesh.position.set(0, 0.016, 0.008);
 
-    // Continuous Connected Press Handle (Pivots cleanly around X axis at x = 0.048, outside press body)
     const pressHandlePivot = new THREE.Group();
     pressHandlePivot.position.set(0.048, 0.024, 0.008);
 
     const handleHub = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.014, 18), pressSteelMat);
     handleHub.rotation.z = Math.PI / 2;
 
-    // Continuous single steel lever shaft from hub straight up-and-out to knob
     const leverRod = new THREE.Mesh(new THREE.CylinderGeometry(0.0036, 0.0042, 0.165, 14), pressSteelMat);
     leverRod.position.set(0.014, 0.078, 0.022);
     leverRod.rotation.z = -0.17;
@@ -2086,7 +2078,6 @@
 
     pressHandlePivot.add(handleHub, leverRod, handleCollar, pressHandleKnob);
 
-    // Animated Press Ram & Machined Shellholder
     const pressRamGroup = new THREE.Group();
     pressRamGroup.position.set(0, 0.025, 0.008);
 
@@ -2116,15 +2107,22 @@
       roughness: 0.25,
       metalness: 0.85,
       transparent: true,
-      opacity: 0.68
+      opacity: 0.68,
+      depthWrite: false
     });
     const bPrimerMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.2, metalness: 0.95 });
-    const bPowderMat = new THREE.MeshStandardMaterial({ color: 0x14181d, roughness: 0.95 });
-    const bCopperMat = new THREE.MeshStandardMaterial({ color: 0xc87533, roughness: 0.28, metalness: 0.88 });
+    const bPowderMat = new THREE.MeshStandardMaterial({
+      color: 0x181e26,
+      roughness: 0.95,
+      polygonOffset: true,
+      polygonOffsetFactor: 2,
+      polygonOffsetUnits: 2
+    });
+    const bCopperMat = new THREE.MeshStandardMaterial({ color: 0xc87533, roughness: 0.26, metalness: 0.88 });
     const bScribeMat = new THREE.MeshStandardMaterial({ color: 0x3b2313, roughness: 0.6 });
-    const bRedPolymerMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.32 });
-    const bAluminumTipMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.18, metalness: 0.95 });
-    const bClosedMeplatMat = new THREE.MeshStandardMaterial({ color: 0xd9823b, roughness: 0.24, metalness: 0.9 });
+    const bRedPolymerMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.30 });
+    const bAluminumTipMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.16, metalness: 0.95 });
+    const bClosedMeplatMat = new THREE.MeshStandardMaterial({ color: 0xd9823b, roughness: 0.22, metalness: 0.9 });
 
     const caseBodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0068, 0.042, 24), bBrassMat);
     const caseBeltMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0072, 0.004, 24), bBrassMat);
@@ -2153,13 +2151,57 @@
     );
     powderStreamMesh.visible = false;
 
-    // Projectile Assembly (Shank + Reference Cannelure Ring + Ogive + Tip / Meplat)
+    // Realistic Revolved Ogive Projectile (Boat-tail + Bearing Shank + Curved Tangent/Secant Ogive + Tip)
+    function createOgiveBulletGeometry(hasTipSlot = false) {
+      const pts = [];
+      // 1. Boat-tail base (y = 0.0 to 0.14)
+      pts.push(new THREE.Vector2(0.0, 0.0));
+      pts.push(new THREE.Vector2(0.82, 0.0));
+      pts.push(new THREE.Vector2(1.0, 0.14));
+      // 2. Full-diameter bearing shank (y = 0.14 to 0.44)
+      pts.push(new THREE.Vector2(1.0, 0.44));
+      // 3. Curved Tangent/Secant Ogive (y = 0.44 to 0.94 or 1.0)
+      const ogiveStart = 0.44;
+      const ogiveEnd = hasTipSlot ? 0.84 : 1.0;
+      const tipRadius = hasTipSlot ? 0.24 : 0.09;
+      const steps = 18;
+      for (let i = 1; i <= steps; i++) {
+        const u = i / steps;
+        const y = ogiveStart + u * (ogiveEnd - ogiveStart);
+        // Smooth circular/secant ogive arc from r=1.0 down to tipRadius
+        const r = tipRadius + (1.0 - tipRadius) * Math.sqrt(Math.max(0, 1.0 - Math.pow(u, 1.55)));
+        pts.push(new THREE.Vector2(r, y));
+      }
+      if (!hasTipSlot) {
+        // Hollow-point OTM meplat cup closure
+        pts.push(new THREE.Vector2(0.04, ogiveEnd - 0.02));
+        pts.push(new THREE.Vector2(0.0, ogiveEnd - 0.02));
+      }
+      return new THREE.LatheGeometry(pts, 28);
+    }
+
+    function createOgiveTipGeometry() {
+      const pts = [];
+      const steps = 10;
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        const y = 0.84 + u * 0.16;
+        const r = 0.24 * Math.sqrt(Math.max(0, 1.0 - Math.pow(u, 1.45)));
+        pts.push(new THREE.Vector2(r, y));
+      }
+      return new THREE.LatheGeometry(pts, 24);
+    }
+
+    const bulletOtmGeo = createOgiveBulletGeometry(false);
+    const bulletTippedBodyGeo = createOgiveBulletGeometry(true);
+    const bulletTipGeo = createOgiveTipGeometry();
+
     const projectileGroup = new THREE.Group();
-    const bulletShankMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0038, 0.0038, 0.018, 24), bCopperMat);
-    const bulletScribeRing = new THREE.Mesh(new THREE.CylinderGeometry(0.0039, 0.0039, 0.0012, 24), bScribeMat);
-    const bulletOgiveMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0038, 0.018, 24), bCopperMat);
-    const bulletTipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.0014, 0.0065, 16), bRedPolymerMat);
-    projectileGroup.add(bulletShankMesh, bulletScribeRing, bulletOgiveMesh, bulletTipMesh);
+    const bulletBodyMesh = new THREE.Mesh(bulletOtmGeo, bCopperMat);
+    const bulletScribeRing = new THREE.Mesh(new THREE.CylinderGeometry(1.015, 1.015, 0.028, 28), bScribeMat);
+    bulletScribeRing.position.y = 0.30;
+    const bulletTipMesh = new THREE.Mesh(bulletTipGeo, bRedPolymerMat);
+    projectileGroup.add(bulletBodyMesh, bulletScribeRing, bulletTipMesh);
 
     cartridgeHolder.add(
       caseBodyMesh, caseBeltMesh, caseShoulderMesh, caseNeckMesh,
@@ -2183,7 +2225,7 @@
       else bBrassMat.color.setHex(0x9c7a28);
 
       bPrimerMat.color.setHex(hl.brass === 'range' ? 0xd4af37 : 0xf1f5f9);
-      bPowderMat.color.setHex(hl.powder === 'ball' ? 0x2d3748 : 0x14181d);
+      bPowderMat.color.setHex(hl.powder === 'ball' ? 0x2d3748 : 0x181e26);
 
       const bodyH = caseLenM * cart.shoulderFrac;
       const shH = caseLenM * (1.0 - cart.shoulderFrac - cart.neckFrac);
@@ -2207,11 +2249,14 @@
 
       primerDiscMesh.position.y = 0.001;
 
-      const fillRatio = Math.min(1.06, Math.max(0.0, (hl.pouredChargePct / 100) * 0.88));
+      // Keep powder column cleanly inside straight-walled brass interior (0.78x outer radius & <= 96% of bodyH)
+      // so it never clips through the tapered shoulder or brass case wall
+      const fillRatio = Math.min(0.96, Math.max(0.0, (hl.pouredChargePct / 106) * 0.94));
       powderColMesh.visible = hl.pouredChargePct > 0.5;
-      const pHeight = Math.max(0.002, (bodyH + shH * 0.65) * fillRatio);
-      powderColMesh.scale.set((rBody * 0.88) / 0.0056, pHeight / 0.036, (rBody * 0.88) / 0.0056);
-      powderColMesh.position.y = 0.003 + pHeight / 2;
+      const pHeight = Math.max(0.002, bodyH * fillRatio);
+      const innerPowderScaleR = (rBody * 0.78) / 0.0056;
+      powderColMesh.scale.set(innerPowderScaleR, pHeight / 0.036, innerPowderScaleR);
+      powderColMesh.position.y = 0.0025 + pHeight / 2;
 
       funnelGroup.visible = !hl.isSeated && pressStrokeFrac === 0;
       funnelGroup.position.y = caseLenM;
@@ -2220,38 +2265,27 @@
 
       pmRotorPivot.rotation.x = state.pouringPowder ? 0.65 : 0.0;
 
-      // Projectile Geometry & Authentic Tip Rendering
-      const shankH = bulletLenM * 0.48;
-      const ogiveH = bulletLenM * 0.52;
-      bulletShankMesh.scale.set(rBullet / 0.0038, shankH / 0.018, rBullet / 0.0038);
-      bulletShankMesh.position.y = shankH / 2;
-
-      bulletScribeRing.scale.set(rBullet / 0.0038, 1.0, rBullet / 0.0038);
-      bulletScribeRing.position.y = shankH * 0.62;
-
-      bulletOgiveMesh.scale.set(rBullet / 0.0038, ogiveH / 0.018, rBullet / 0.0038);
-      bulletOgiveMesh.position.y = shankH + ogiveH / 2;
+      // Scale normalized LatheGeometry (radius=1.0, height=1.0) to exact projectile dimensions
+      projectileGroup.scale.set(rBullet, bulletLenM, rBullet);
 
       if (b.tipType === 'eldm') {
+        bulletBodyMesh.geometry = bulletTippedBodyGeo;
         bulletTipMesh.visible = true;
         bulletTipMesh.material = bRedPolymerMat;
-        bulletTipMesh.scale.set(rBullet / 0.0038, (ogiveH * 0.42) / 0.0065, rBullet / 0.0038);
-        bulletTipMesh.position.y = shankH + ogiveH * 0.92;
       } else if (b.tipType === 'atip') {
+        bulletBodyMesh.geometry = bulletTippedBodyGeo;
         bulletTipMesh.visible = true;
         bulletTipMesh.material = bAluminumTipMat;
-        bulletTipMesh.scale.set(rBullet / 0.0038, (ogiveH * 0.44) / 0.0065, rBullet / 0.0038);
-        bulletTipMesh.position.y = shankH + ogiveH * 0.92;
       } else if (hl.pointed) {
+        bulletBodyMesh.geometry = bulletTippedBodyGeo;
         bulletTipMesh.visible = true;
         bulletTipMesh.material = bClosedMeplatMat;
-        bulletTipMesh.scale.set((rBullet * 0.78) / 0.0038, (ogiveH * 0.30) / 0.0065, (rBullet * 0.78) / 0.0038);
-        bulletTipMesh.position.y = shankH + ogiveH * 0.90;
       } else {
+        bulletBodyMesh.geometry = bulletOtmGeo;
         bulletTipMesh.visible = false;
       }
 
-      // Amplified visual seating depth movement so 0.005"–0.080" jump adjustments are clearly visible on the cartridge
+      const shankH = bulletLenM * 0.44;
       const jumpDeltaIn = 0.040 - hl.jumpIn;
       const visualOffsetM = (jumpDeltaIn * 4.5) * IN_TO_M;
       const seatedY = caseLenM - shankH * 0.72 + visualOffsetM;
@@ -2305,7 +2339,6 @@
         state.pressAnimTimer += 0.035;
         if (state.pressAnimTimer <= 1.0) {
           const p = state.pressAnimTimer;
-          // Smooth forward pull around X axis — stays completely outside the press casting
           pressHandlePivot.rotation.x = p * 1.45;
           pressRamGroup.position.y = 0.025 + p * 0.042;
           toggleLinkMesh.position.y = 0.016 + p * 0.021;
