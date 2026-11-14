@@ -993,24 +993,20 @@
     // 3. COMPLETE 29-BULLET LIBRARY WITH EXACT CARTRIDGE COMPATIBILITY & TIP TYPES
     // =========================================================================
     const BULLETS = [
-      // .224 Bullets
       { id: 'sierra_224_77', name: '.224 Sierra 77gr SMK', cost: 0, roundCost: 1.50, bc: 0.190, mv: 2750, dia: 0.224, wt: 77.0, len: 0.990, twist: 8.0, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.020 },
       { id: 'hornady_224_75', name: '.224 Hornady 75gr ELD-M', cost: 120, roundCost: 1.60, bc: 0.212, mv: 2810, dia: 0.224, wt: 75.0, len: 1.110, twist: 8.0, tipType: 'eldm', cases: ['556_nato'], sweetJump: 0.025 },
       { id: 'berger_224_805', name: '.224 Berger 80.5gr Fullbore', cost: 220, roundCost: 1.85, bc: 0.226, mv: 2780, dia: 0.224, wt: 80.5, len: 1.095, twist: 7.5, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.015 },
       { id: 'hornady_224_88', name: '.224 Hornady 88gr ELD-M', cost: 320, roundCost: 1.95, bc: 0.274, mv: 2680, dia: 0.224, wt: 88.0, len: 1.240, twist: 7.0, tipType: 'eldm', cases: ['22_arc'], sweetJump: 0.030 },
 
-      // .243 Bullets
       { id: 'hornady_243_105', name: '.243 Hornady 105gr BTHP', cost: 420, roundCost: 2.10, bc: 0.265, mv: 2980, dia: 0.243, wt: 105.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
       { id: 'sierra_243_107', name: '.243 Sierra 107gr SMK', cost: 500, roundCost: 2.25, bc: 0.262, mv: 2960, dia: 0.243, wt: 107.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.020 },
       { id: 'hornady_243_108', name: '.243 Hornady 108gr ELD-M', cost: 600, roundCost: 2.30, bc: 0.275, mv: 2950, dia: 0.243, wt: 108.0, len: 1.265, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.030 },
       { id: 'hornady_243_109', name: '.243 Hornady 109gr ELD-M', cost: 720, roundCost: 2.45, bc: 0.295, mv: 2930, dia: 0.243, wt: 109.0, len: 1.315, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
       { id: 'berger_243_120', name: '.243 Berger 120gr LR Hybrid', cost: 880, roundCost: 2.75, bc: 0.328, mv: 2860, dia: 0.243, wt: 120.0, len: 1.383, twist: 7.0, tipType: 'otm', cases: ['6_cm', '6_gt'], sweetJump: 0.020 },
 
-      // .257 Bullets
       { id: 'hornady_257_134', name: '.257 Hornady 134gr ELD-M', cost: 1020, roundCost: 2.90, bc: 0.325, mv: 2880, dia: 0.257, wt: 134.0, len: 1.410, twist: 7.5, tipType: 'eldm', cases: ['25_cm'], sweetJump: 0.030 },
       { id: 'berger_257_135', name: '.257 Berger 135gr LR Hybrid', cost: 1180, roundCost: 3.10, bc: 0.334, mv: 2870, dia: 0.257, wt: 135.0, len: 1.416, twist: 7.5, tipType: 'otm', cases: ['25_cm'], sweetJump: 0.020 },
 
-      // .264 Bullets
       { id: 'hornady_264_140', name: '.264 Hornady 140gr ELD-M', cost: 1320, roundCost: 3.00, bc: 0.315, mv: 2715, dia: 0.264, wt: 140.0, len: 1.380, twist: 8.0, tipType: 'eldm', cases: ['65_cm', '65_prc'], sweetJump: 0.030 },
       { id: 'berger_264_140', name: '.264 Berger 140gr Hybrid', cost: 1450, roundCost: 3.25, bc: 0.311, mv: 2720, dia: 0.264, wt: 140.0, len: 1.405, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
       { id: 'berger_264_144', name: '.264 Berger 144gr LR Hybrid', cost: 1600, roundCost: 3.40, bc: 0.336, mv: 2705, dia: 0.264, wt: 144.0, len: 1.415, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
@@ -1020,21 +1016,17 @@
       { id: 'hornady_264_153', name: '.264 Hornady 153gr A-Tip', cost: 2250, roundCost: 4.20, bc: 0.354, mv: 2660, dia: 0.264, wt: 153.0, len: 1.505, twist: 7.5, tipType: 'atip', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
       { id: 'berger_264_1535', name: '.264 Berger 153.5gr LR Hybrid', cost: 2450, roundCost: 3.90, bc: 0.356, mv: 2665, dia: 0.264, wt: 153.5, len: 1.465, twist: 7.5, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
 
-      // .277 Bullets -> 6.8 Western
       { id: 'berger_277_170', name: '.277 Berger 170gr EOL Hybrid', cost: 1950, roundCost: 3.65, bc: 0.339, mv: 2860, dia: 0.277, wt: 170.0, len: 1.490, twist: 8.0, tipType: 'otm', cases: ['68_western'], sweetJump: 0.020 },
       { id: 'hornady_277_176', name: '.277 Hornady 176gr ELD-X', cost: 2150, roundCost: 3.75, bc: 0.360, mv: 2810, dia: 0.277, wt: 176.0, len: 1.540, twist: 8.0, tipType: 'eldm', cases: ['68_western'], sweetJump: 0.025 },
 
-      // .284 (7mm) Bullets
       { id: 'generic_284_150', name: '7mm 150gr Match BTHP', cost: 1500, roundCost: 3.15, bc: 0.268, mv: 3060, dia: 0.284, wt: 150.0, len: 1.340, twist: 8.5, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.025 },
       { id: 'sierra_284_197', name: '7mm Sierra 197gr SMK', cost: 2750, roundCost: 4.10, bc: 0.385, mv: 2790, dia: 0.284, wt: 197.0, len: 1.650, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.015 },
       { id: 'berger_284_195', name: '7mm Berger 195gr EOL Hybrid', cost: 2950, roundCost: 4.30, bc: 0.387, mv: 2815, dia: 0.284, wt: 195.0, len: 1.655, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.020 },
 
-      // .308 Bullets
       { id: 'berger_308_185', name: '.308 Berger 185gr Juggernaut', cost: 1100, roundCost: 2.85, bc: 0.283, mv: 2620, dia: 0.308, wt: 185.0, len: 1.355, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.025 },
       { id: 'berger_308_200', name: '.308 Berger 200.20x Hybrid', cost: 1550, roundCost: 3.30, bc: 0.328, mv: 2590, dia: 0.308, wt: 200.0, len: 1.510, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.020 },
       { id: 'berger_308_245', name: '.308 Berger 245gr LR Hybrid', cost: 3300, roundCost: 4.80, bc: 0.433, mv: 2710, dia: 0.308, wt: 245.0, len: 1.775, twist: 8.5, tipType: 'otm', cases: ['300_prc', '300_norma'], sweetJump: 0.020 },
 
-      // .375 & .416 ELR Bullets
       { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, tipType: 'otm', cases: ['375_cheytac'], sweetJump: 0.030 },
       { id: 'wtc_416_550', name: '.416 WTC Flat Line 550gr', cost: 6400, roundCost: 9.50, bc: 0.637, mv: 2850, dia: 0.416, wt: 550.0, len: 2.600, twist: 9.0, tipType: 'otm', cases: ['416_barrett'], sweetJump: 0.030 }
     ];
@@ -1072,7 +1064,7 @@
     // =========================================================================
     // 4. PLAYER STATE, HANDLOAD RECIPE & INTERACTIVE BENCH STATE
     // =========================================================================
-    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v5';
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v6';
     const DEFAULT_SAVE = {
       cash: 250.00,
       unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
@@ -1916,7 +1908,7 @@
     }
 
     // =========================================================================
-    // 6. LOWER-FRAMED 3D RELOADING BENCH & NON-CLIPPING SINGLE-STAGE PRESS
+    // 6. ADAPTIVE-CLEARANCE 3D RELOADING BENCH & SINGLE-STAGE PRESS
     // =========================================================================
     const benchCanvas = document.getElementById('benchCanvas');
     const benchRenderer = new THREE.WebGLRenderer({ canvas: benchCanvas, antialias: true });
@@ -1942,23 +1934,23 @@
 
     // Hardwood Reloading Bench Top + Front Steel Edge Trim
     const tableMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.72, 0.022, 0.46),
+      new THREE.BoxGeometry(0.76, 0.022, 0.48),
       new THREE.MeshStandardMaterial({ color: 0x453222, roughness: 0.78 })
     );
     tableMesh.position.set(0, -0.011, 0);
     const benchEdgeTrim = new THREE.Mesh(
-      new THREE.BoxGeometry(0.72, 0.024, 0.008),
+      new THREE.BoxGeometry(0.76, 0.024, 0.008),
       new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 })
     );
-    benchEdgeTrim.position.set(0, -0.011, 0.23);
+    benchEdgeTrim.position.set(0, -0.011, 0.24);
     benchWorld.add(tableMesh, benchEdgeTrim);
 
     // Clean Gunsmithing Wall Backdrop
     const backWallMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.84, 0.52, 0.02),
+      new THREE.BoxGeometry(0.92, 0.65, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x171c24, roughness: 0.92 })
     );
-    backWallMesh.position.set(0, 0.24, -0.19);
+    backWallMesh.position.set(0, 0.30, -0.20);
     benchWorld.add(backWallMesh);
 
     // Powder Measure / Charger Assembly (Left Side of Bench)
@@ -1967,7 +1959,7 @@
     const pmDarkSteelMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.8 });
 
     const powderMeasureGroup = new THREE.Group();
-    powderMeasureGroup.position.set(-0.125, 0, -0.01);
+    powderMeasureGroup.position.set(-0.130, 0, -0.01);
 
     const pmClampBase = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.012, 0.044), pmDarkSteelMat);
     pmClampBase.position.y = 0.006;
@@ -2032,53 +2024,46 @@
     );
     benchWorld.add(powderMeasureGroup);
 
-    // High-Fidelity Cast O-Frame Single-Stage Reloading Press
+    // High-Fidelity Cast O-Frame Single-Stage Reloading Press (Dynamically Sized O-Frame Window)
     const pressRedMat = new THREE.MeshStandardMaterial({ color: 0x9b2c2c, roughness: 0.42, metalness: 0.52 });
     const pressSteelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.22, metalness: 0.92 });
     const pressDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.8 });
 
     const pressGroup = new THREE.Group();
-    pressGroup.position.set(0.025, 0, 0.01);
+    pressGroup.position.set(0.028, 0, 0.01);
 
-    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.018, 0.074), pressRedMat);
+    const pressBase = new THREE.Mesh(new THREE.BoxGeometry(0.084, 0.018, 0.078), pressRedMat);
     pressBase.position.y = 0.009;
 
     const ramBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.036, 20), pressRedMat);
     ramBoss.position.set(0, 0.024, 0.008);
 
-    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.195, 16), pressRedMat);
-    leftPillar.position.set(-0.026, 0.112, -0.014);
-    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.195, 16), pressRedMat);
-    rightPillar.position.set(0.026, 0.112, -0.014);
-    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.185, 0.012), pressRedMat);
-    backWeb.position.set(0, 0.110, -0.024);
+    // Pillars & Back Web use unit height (1.0) so we can scale them cleanly to fit any cartridge from 5.56 to .416 Barrett
+    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.0105, 1.0, 16), pressRedMat);
+    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.0105, 1.0, 16), pressRedMat);
+    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.052, 1.0, 0.012), pressRedMat);
 
-    const pressTopHead = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.024, 24), pressRedMat);
-    pressTopHead.position.set(0, 0.208, 0.004);
+    const pressTopHead = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.024, 24), pressRedMat);
 
     // Micrometer Bullet Seating Die
     const dieLockRing = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0155, 0.007, 24), pressDarkMat);
-    dieLockRing.position.set(0, 0.223, 0.008);
     const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, 0.0115, 0.042, 24), pressSteelMat);
-    seatingDie.position.set(0, 0.243, 0.008);
     const dieThimble = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.018, 24), pressDarkMat);
-    dieThimble.position.set(0, 0.270, 0.008);
     const dieTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0075, 0.012, 18), pressSteelMat);
-    dieTopCap.position.set(0, 0.284, 0.008);
 
-    const crossShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.094, 16), pressSteelMat);
+    const crossShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.102, 16), pressSteelMat);
     crossShaft.rotation.z = Math.PI / 2;
     crossShaft.position.set(0.004, 0.024, 0.008);
 
     const rightPivotBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.014, 18), pressDarkMat);
     rightPivotBoss.rotation.z = Math.PI / 2;
-    rightPivotBoss.position.set(0.044, 0.024, 0.008);
+    rightPivotBoss.position.set(0.048, 0.024, 0.008);
 
     const toggleLinkMesh = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.032, 0.012), pressDarkMat);
     toggleLinkMesh.position.set(0, 0.016, 0.008);
 
     const pressHandlePivot = new THREE.Group();
-    pressHandlePivot.position.set(0.048, 0.024, 0.008);
+    pressHandlePivot.position.set(0.052, 0.024, 0.008);
 
     const handleHub = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.014, 18), pressSteelMat);
     handleHub.rotation.z = Math.PI / 2;
@@ -2107,7 +2092,7 @@
     const pressRamShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.068, 20), pressSteelMat);
     pressRamShaft.position.y = 0.015;
     const shellHolder = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.0165, 0.0165, 0.009, 24),
+      new THREE.CylinderGeometry(0.0175, 0.0175, 0.009, 24),
       pressDarkMat
     );
     shellHolder.position.y = 0.051;
@@ -2226,6 +2211,8 @@
       primerDiscMesh, powderColMesh, funnelGroup, powderStreamMesh, projectileGroup
     );
 
+    let activePressStroke = 0.042;
+
     function update3DCartridgePreview(pressStrokeFrac = 0) {
       ensureValidCartridgeForBullet();
       const b = BULLETS.find(x => x.id === state.eq.bullet);
@@ -2238,6 +2225,42 @@
       const caseLenM = cart.caseLenIn * IN_TO_M;
       const bulletLenM = b.len * IN_TO_M;
 
+      // 1. Dynamically size the O-frame press opening & camera distance so large ELR rounds
+      // (.300 PRC, .300 Norma, .375 CheyTac, .416 Barrett) fit with full clearance and never clip
+      const shankH = bulletLenM * 0.44;
+      const jumpDeltaIn = 0.040 - hl.jumpIn;
+      const visualOffsetM = (jumpDeltaIn * 4.5) * IN_TO_M;
+      const seatedY = caseLenM - shankH * 0.72 + visualOffsetM;
+      const totalLoadedHeightM = seatedY + bulletLenM;
+
+      // Ram stroke lifts bullet tip cleanly into the bottom mouth of the seating die
+      activePressStroke = Math.min(0.044, Math.max(0.024, totalLoadedHeightM * 0.36));
+      const shellHolderBaseY = 0.025 + 0.0555; // 0.0805m above benchtop
+      const requiredCrownY = Math.max(0.208, shellHolderBaseY + totalLoadedHeightM + activePressStroke + 0.012);
+      const pillarSpan = requiredCrownY - 0.014;
+      const pillarSpreadX = Math.max(0.028, rBody * 2.1);
+
+      leftPillar.scale.set(1, pillarSpan, 1);
+      leftPillar.position.set(-pillarSpreadX, 0.014 + pillarSpan / 2, -0.016);
+      rightPillar.scale.set(1, pillarSpan, 1);
+      rightPillar.position.set(pillarSpreadX, 0.014 + pillarSpan / 2, -0.016);
+
+      backWeb.scale.set((pillarSpreadX * 1.85) / 0.052, pillarSpan * 0.94, 1);
+      backWeb.position.set(0, 0.014 + pillarSpan / 2, -0.025);
+
+      pressTopHead.position.set(0, requiredCrownY, 0.004);
+      dieLockRing.position.set(0, requiredCrownY + 0.015, 0.008);
+      seatingDie.position.set(0, requiredCrownY + 0.035, 0.008);
+      dieThimble.position.set(0, requiredCrownY + 0.062 + (jumpDeltaIn * 1.8) * IN_TO_M, 0.008);
+      dieTopCap.position.set(0, requiredCrownY + 0.076, 0.008);
+
+      // Adaptive camera framing so full cartridge + press + powder measure are always visible
+      const extraHeight = Math.max(0, requiredCrownY - 0.208);
+      benchWorld.position.y = -0.042 - extraHeight * 0.42;
+      benchCamera.position.set(0.015, 0.075 + extraHeight * 0.12, 0.34 + extraHeight * 1.15);
+      benchCamera.lookAt(0, 0.052 + extraHeight * 0.08, 0);
+
+      // 2. Brass, Primer & Powder Visuals
       if (hl.brass === 'lapua') bBrassMat.color.setHex(0xe2b93b);
       else if (hl.brass === 'sorted') bBrassMat.color.setHex(0xcfa332);
       else bBrassMat.color.setHex(0x9c7a28);
@@ -2281,6 +2304,7 @@
 
       pmRotorPivot.rotation.x = state.pouringPowder ? 0.65 : 0.0;
 
+      // 3. Projectile Profile & Seating Stroke
       projectileGroup.scale.set(rBullet, bulletLenM, rBullet);
 
       if (b.tipType === 'eldm') {
@@ -2300,13 +2324,7 @@
         bulletTipMesh.visible = false;
       }
 
-      const shankH = bulletLenM * 0.44;
-      const jumpDeltaIn = 0.040 - hl.jumpIn;
-      const visualOffsetM = (jumpDeltaIn * 4.5) * IN_TO_M;
-      const seatedY = caseLenM - shankH * 0.72 + visualOffsetM;
-      const unseatedHoverY = caseLenM + 0.036;
-
-      dieThimble.position.y = 0.270 + (jumpDeltaIn * 1.8) * IN_TO_M;
+      const unseatedHoverY = caseLenM + 0.028;
 
       if (hl.isSeated) {
         projectileGroup.visible = true;
@@ -2355,15 +2373,15 @@
         if (state.pressAnimTimer <= 1.0) {
           const p = state.pressAnimTimer;
           pressHandlePivot.rotation.x = p * 1.45;
-          pressRamGroup.position.y = 0.025 + p * 0.042;
-          toggleLinkMesh.position.y = 0.016 + p * 0.021;
+          pressRamGroup.position.y = 0.025 + p * activePressStroke;
+          toggleLinkMesh.position.y = 0.016 + p * (activePressStroke * 0.5);
           strokeFrac = p;
           if (p >= 0.95) state.handload.isSeated = true;
         } else if (state.pressAnimTimer <= 2.0) {
           const p = 2.0 - state.pressAnimTimer;
           pressHandlePivot.rotation.x = p * 1.45;
-          pressRamGroup.position.y = 0.025 + p * 0.042;
-          toggleLinkMesh.position.y = 0.016 + p * 0.021;
+          pressRamGroup.position.y = 0.025 + p * activePressStroke;
+          toggleLinkMesh.position.y = 0.016 + p * (activePressStroke * 0.5);
           strokeFrac = 1.0;
         } else {
           pressHandlePivot.rotation.x = 0;
