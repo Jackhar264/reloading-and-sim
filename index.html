@@ -947,6 +947,11 @@
         baseDiaIn: 0.532, caseLenIn: 2.030, shoulderFrac: 0.76, neckFrac: 0.13, belted: false,
         mvMult: 1.085, baseChargeGr: 54.0
       },
+      '68_western': {
+        id: '68_western', name: '6.8 Western', cal: 0.277, capH2O: 73.5, saamiPsi: 65000,
+        baseDiaIn: 0.535, caseLenIn: 2.020, shoulderFrac: 0.76, neckFrac: 0.13, belted: false,
+        mvMult: 1.00, baseChargeGr: 59.0
+      },
       '7mm_rem_mag': {
         id: '7mm_rem_mag', name: '7mm Remington Magnum', cal: 0.284, capH2O: 83.2, saamiPsi: 61000,
         baseDiaIn: 0.513, caseLenIn: 2.500, shoulderFrac: 0.82, neckFrac: 0.10, belted: true,
@@ -976,27 +981,36 @@
         id: '375_cheytac', name: '.375 CheyTac', cal: 0.375, capH2O: 165.0, saamiPsi: 63500,
         baseDiaIn: 0.640, caseLenIn: 3.020, shoulderFrac: 0.78, neckFrac: 0.12, belted: false,
         mvMult: 1.00, baseChargeGr: 132.0
+      },
+      '416_barrett': {
+        id: '416_barrett', name: '.416 Barrett', cal: 0.416, capH2O: 202.0, saamiPsi: 63500,
+        baseDiaIn: 0.795, caseLenIn: 3.270, shoulderFrac: 0.78, neckFrac: 0.12, belted: false,
+        mvMult: 1.00, baseChargeGr: 168.0
       }
     };
 
     // =========================================================================
-    // 3. COMPLETE 25-BULLET LIBRARY WITH EXACT CARTRIDGE COMPATIBILITY & TIP TYPES
+    // 3. COMPLETE 29-BULLET LIBRARY WITH EXACT CARTRIDGE COMPATIBILITY & TIP TYPES
     // =========================================================================
     const BULLETS = [
+      // .224 Bullets
       { id: 'sierra_224_77', name: '.224 Sierra 77gr SMK', cost: 0, roundCost: 1.50, bc: 0.190, mv: 2750, dia: 0.224, wt: 77.0, len: 0.990, twist: 8.0, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.020 },
       { id: 'hornady_224_75', name: '.224 Hornady 75gr ELD-M', cost: 120, roundCost: 1.60, bc: 0.212, mv: 2810, dia: 0.224, wt: 75.0, len: 1.110, twist: 8.0, tipType: 'eldm', cases: ['556_nato'], sweetJump: 0.025 },
       { id: 'berger_224_805', name: '.224 Berger 80.5gr Fullbore', cost: 220, roundCost: 1.85, bc: 0.226, mv: 2780, dia: 0.224, wt: 80.5, len: 1.095, twist: 7.5, tipType: 'otm', cases: ['556_nato'], sweetJump: 0.015 },
       { id: 'hornady_224_88', name: '.224 Hornady 88gr ELD-M', cost: 320, roundCost: 1.95, bc: 0.274, mv: 2680, dia: 0.224, wt: 88.0, len: 1.240, twist: 7.0, tipType: 'eldm', cases: ['22_arc'], sweetJump: 0.030 },
 
+      // .243 Bullets
       { id: 'hornady_243_105', name: '.243 Hornady 105gr BTHP', cost: 420, roundCost: 2.10, bc: 0.265, mv: 2980, dia: 0.243, wt: 105.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
       { id: 'sierra_243_107', name: '.243 Sierra 107gr SMK', cost: 500, roundCost: 2.25, bc: 0.262, mv: 2960, dia: 0.243, wt: 107.0, len: 1.230, twist: 8.0, tipType: 'otm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.020 },
       { id: 'hornady_243_108', name: '.243 Hornady 108gr ELD-M', cost: 600, roundCost: 2.30, bc: 0.275, mv: 2950, dia: 0.243, wt: 108.0, len: 1.265, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.030 },
       { id: 'hornady_243_109', name: '.243 Hornady 109gr ELD-M', cost: 720, roundCost: 2.45, bc: 0.295, mv: 2930, dia: 0.243, wt: 109.0, len: 1.315, twist: 7.5, tipType: 'eldm', cases: ['6_cm', '6_gt', '6_arc'], sweetJump: 0.025 },
       { id: 'berger_243_120', name: '.243 Berger 120gr LR Hybrid', cost: 880, roundCost: 2.75, bc: 0.328, mv: 2860, dia: 0.243, wt: 120.0, len: 1.383, twist: 7.0, tipType: 'otm', cases: ['6_cm', '6_gt'], sweetJump: 0.020 },
 
+      // .257 Bullets
       { id: 'hornady_257_134', name: '.257 Hornady 134gr ELD-M', cost: 1020, roundCost: 2.90, bc: 0.325, mv: 2880, dia: 0.257, wt: 134.0, len: 1.410, twist: 7.5, tipType: 'eldm', cases: ['25_cm'], sweetJump: 0.030 },
       { id: 'berger_257_135', name: '.257 Berger 135gr LR Hybrid', cost: 1180, roundCost: 3.10, bc: 0.334, mv: 2870, dia: 0.257, wt: 135.0, len: 1.416, twist: 7.5, tipType: 'otm', cases: ['25_cm'], sweetJump: 0.020 },
 
+      // .264 Bullets
       { id: 'hornady_264_140', name: '.264 Hornady 140gr ELD-M', cost: 1320, roundCost: 3.00, bc: 0.315, mv: 2715, dia: 0.264, wt: 140.0, len: 1.380, twist: 8.0, tipType: 'eldm', cases: ['65_cm', '65_prc'], sweetJump: 0.030 },
       { id: 'berger_264_140', name: '.264 Berger 140gr Hybrid', cost: 1450, roundCost: 3.25, bc: 0.311, mv: 2720, dia: 0.264, wt: 140.0, len: 1.405, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
       { id: 'berger_264_144', name: '.264 Berger 144gr LR Hybrid', cost: 1600, roundCost: 3.40, bc: 0.336, mv: 2705, dia: 0.264, wt: 144.0, len: 1.415, twist: 8.0, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
@@ -1006,14 +1020,23 @@
       { id: 'hornady_264_153', name: '.264 Hornady 153gr A-Tip', cost: 2250, roundCost: 4.20, bc: 0.354, mv: 2660, dia: 0.264, wt: 153.0, len: 1.505, twist: 7.5, tipType: 'atip', cases: ['65_cm', '65_prc'], sweetJump: 0.025 },
       { id: 'berger_264_1535', name: '.264 Berger 153.5gr LR Hybrid', cost: 2450, roundCost: 3.90, bc: 0.356, mv: 2665, dia: 0.264, wt: 153.5, len: 1.465, twist: 7.5, tipType: 'otm', cases: ['65_cm', '65_prc'], sweetJump: 0.020 },
 
+      // .277 Bullets -> 6.8 Western
+      { id: 'berger_277_170', name: '.277 Berger 170gr EOL Hybrid', cost: 1950, roundCost: 3.65, bc: 0.339, mv: 2860, dia: 0.277, wt: 170.0, len: 1.490, twist: 8.0, tipType: 'otm', cases: ['68_western'], sweetJump: 0.020 },
+      { id: 'hornady_277_176', name: '.277 Hornady 176gr ELD-X', cost: 2150, roundCost: 3.75, bc: 0.360, mv: 2810, dia: 0.277, wt: 176.0, len: 1.540, twist: 8.0, tipType: 'eldm', cases: ['68_western'], sweetJump: 0.025 },
+
+      // .284 (7mm) Bullets
+      { id: 'generic_284_150', name: '7mm 150gr Match BTHP', cost: 1500, roundCost: 3.15, bc: 0.268, mv: 3060, dia: 0.284, wt: 150.0, len: 1.340, twist: 8.5, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.025 },
       { id: 'sierra_284_197', name: '7mm Sierra 197gr SMK', cost: 2750, roundCost: 4.10, bc: 0.385, mv: 2790, dia: 0.284, wt: 197.0, len: 1.650, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.015 },
       { id: 'berger_284_195', name: '7mm Berger 195gr EOL Hybrid', cost: 2950, roundCost: 4.30, bc: 0.387, mv: 2815, dia: 0.284, wt: 195.0, len: 1.655, twist: 8.0, tipType: 'otm', cases: ['7mm_prc', '7mm_rem_mag'], sweetJump: 0.020 },
 
+      // .308 Bullets
       { id: 'berger_308_185', name: '.308 Berger 185gr Juggernaut', cost: 1100, roundCost: 2.85, bc: 0.283, mv: 2620, dia: 0.308, wt: 185.0, len: 1.355, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.025 },
       { id: 'berger_308_200', name: '.308 Berger 200.20x Hybrid', cost: 1550, roundCost: 3.30, bc: 0.328, mv: 2590, dia: 0.308, wt: 200.0, len: 1.510, twist: 10.0, tipType: 'otm', cases: ['308_win'], sweetJump: 0.020 },
       { id: 'berger_308_245', name: '.308 Berger 245gr LR Hybrid', cost: 3300, roundCost: 4.80, bc: 0.433, mv: 2710, dia: 0.308, wt: 245.0, len: 1.775, twist: 8.5, tipType: 'otm', cases: ['300_prc', '300_norma'], sweetJump: 0.020 },
 
-      { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, tipType: 'otm', cases: ['375_cheytac'], sweetJump: 0.030 }
+      // .375 & .416 ELR Bullets
+      { id: 'berger_375_407', name: '.375 Berger 407gr ELR Solid', cost: 4800, roundCost: 7.50, bc: 0.523, mv: 2650, dia: 0.375, wt: 407.0, len: 2.350, twist: 7.5, tipType: 'otm', cases: ['375_cheytac'], sweetJump: 0.030 },
+      { id: 'wtc_416_550', name: '.416 WTC Flat Line 550gr', cost: 6400, roundCost: 9.50, bc: 0.637, mv: 2850, dia: 0.416, wt: 550.0, len: 2.600, twist: 9.0, tipType: 'otm', cases: ['416_barrett'], sweetJump: 0.030 }
     ];
 
     const OPTICS = [
@@ -1049,7 +1072,7 @@
     // =========================================================================
     // 4. PLAYER STATE, HANDLOAD RECIPE & INTERACTIVE BENCH STATE
     // =========================================================================
-    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v4';
+    const SAVE_KEY = 'precision_rifle_sim_3d_bench_v5';
     const DEFAULT_SAVE = {
       cash: 250.00,
       unlocked: ['sierra_224_77', 'opt_1', 'wind_1', 'ammo_1', 'brl_1', 'chs_1'],
@@ -2023,25 +2046,25 @@
     const ramBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.036, 20), pressRedMat);
     ramBoss.position.set(0, 0.024, 0.008);
 
-    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
-    leftPillar.position.set(-0.026, 0.108, -0.014);
-    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.185, 16), pressRedMat);
-    rightPillar.position.set(0.026, 0.108, -0.014);
-    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.175, 0.012), pressRedMat);
-    backWeb.position.set(0, 0.106, -0.024);
+    const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.195, 16), pressRedMat);
+    leftPillar.position.set(-0.026, 0.112, -0.014);
+    const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.195, 16), pressRedMat);
+    rightPillar.position.set(0.026, 0.112, -0.014);
+    const backWeb = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.185, 0.012), pressRedMat);
+    backWeb.position.set(0, 0.110, -0.024);
 
     const pressTopHead = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.024, 24), pressRedMat);
-    pressTopHead.position.set(0, 0.200, 0.004);
+    pressTopHead.position.set(0, 0.208, 0.004);
 
     // Micrometer Bullet Seating Die
     const dieLockRing = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0155, 0.007, 24), pressDarkMat);
-    dieLockRing.position.set(0, 0.215, 0.008);
+    dieLockRing.position.set(0, 0.223, 0.008);
     const seatingDie = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, 0.0115, 0.042, 24), pressSteelMat);
-    seatingDie.position.set(0, 0.235, 0.008);
+    seatingDie.position.set(0, 0.243, 0.008);
     const dieThimble = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.018, 24), pressDarkMat);
-    dieThimble.position.set(0, 0.262, 0.008);
+    dieThimble.position.set(0, 0.270, 0.008);
     const dieTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0075, 0.012, 18), pressSteelMat);
-    dieTopCap.position.set(0, 0.276, 0.008);
+    dieTopCap.position.set(0, 0.284, 0.008);
 
     const crossShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.094, 16), pressSteelMat);
     crossShaft.rotation.z = Math.PI / 2;
@@ -2154,13 +2177,10 @@
     // Realistic Revolved Ogive Projectile (Boat-tail + Bearing Shank + Curved Tangent/Secant Ogive + Tip)
     function createOgiveBulletGeometry(hasTipSlot = false) {
       const pts = [];
-      // 1. Boat-tail base (y = 0.0 to 0.14)
       pts.push(new THREE.Vector2(0.0, 0.0));
       pts.push(new THREE.Vector2(0.82, 0.0));
       pts.push(new THREE.Vector2(1.0, 0.14));
-      // 2. Full-diameter bearing shank (y = 0.14 to 0.44)
       pts.push(new THREE.Vector2(1.0, 0.44));
-      // 3. Curved Tangent/Secant Ogive (y = 0.44 to 0.94 or 1.0)
       const ogiveStart = 0.44;
       const ogiveEnd = hasTipSlot ? 0.84 : 1.0;
       const tipRadius = hasTipSlot ? 0.24 : 0.09;
@@ -2168,12 +2188,10 @@
       for (let i = 1; i <= steps; i++) {
         const u = i / steps;
         const y = ogiveStart + u * (ogiveEnd - ogiveStart);
-        // Smooth circular/secant ogive arc from r=1.0 down to tipRadius
         const r = tipRadius + (1.0 - tipRadius) * Math.sqrt(Math.max(0, 1.0 - Math.pow(u, 1.55)));
         pts.push(new THREE.Vector2(r, y));
       }
       if (!hasTipSlot) {
-        // Hollow-point OTM meplat cup closure
         pts.push(new THREE.Vector2(0.04, ogiveEnd - 0.02));
         pts.push(new THREE.Vector2(0.0, ogiveEnd - 0.02));
       }
@@ -2249,8 +2267,6 @@
 
       primerDiscMesh.position.y = 0.001;
 
-      // Keep powder column cleanly inside straight-walled brass interior (0.78x outer radius & <= 96% of bodyH)
-      // so it never clips through the tapered shoulder or brass case wall
       const fillRatio = Math.min(0.96, Math.max(0.0, (hl.pouredChargePct / 106) * 0.94));
       powderColMesh.visible = hl.pouredChargePct > 0.5;
       const pHeight = Math.max(0.002, bodyH * fillRatio);
@@ -2265,7 +2281,6 @@
 
       pmRotorPivot.rotation.x = state.pouringPowder ? 0.65 : 0.0;
 
-      // Scale normalized LatheGeometry (radius=1.0, height=1.0) to exact projectile dimensions
       projectileGroup.scale.set(rBullet, bulletLenM, rBullet);
 
       if (b.tipType === 'eldm') {
@@ -2291,7 +2306,7 @@
       const seatedY = caseLenM - shankH * 0.72 + visualOffsetM;
       const unseatedHoverY = caseLenM + 0.036;
 
-      dieThimble.position.y = 0.262 + (jumpDeltaIn * 1.8) * IN_TO_M;
+      dieThimble.position.y = 0.270 + (jumpDeltaIn * 1.8) * IN_TO_M;
 
       if (hl.isSeated) {
         projectileGroup.visible = true;
@@ -3521,7 +3536,7 @@
         { title: 'Barrels & Actions', key: 'barrel', items: BARRELS, fmt: x => x.desc },
         { title: 'Rifle Chassis', key: 'chassis', items: CHASSIS, fmt: x => x.desc },
         {
-          title: 'Precision Projectiles (25-Bullet Library)',
+          title: 'Precision Projectiles (29-Bullet Library)',
           key: 'bullet',
           items: BULLETS,
           fmt: x => {
